@@ -29,6 +29,13 @@ final class PanelController {
         }
     }
 
+    var showCombined: Bool {
+        didSet {
+            UserDefaults.standard.set(showCombined, forKey: Keys.combined)
+            applyVisibility()
+        }
+    }
+
     var openAtLogin: Bool {
         didSet { applyOpenAtLogin() }
     }
@@ -36,6 +43,7 @@ final class PanelController {
     private var networkPanel: GlassPanelWindow?
     private var memoryPanel: GlassPanelWindow?
     private var systemPanel: GlassPanelWindow?
+    private var combinedPanel: GlassPanelWindow?
     private var started = false
 
     init() {
@@ -43,6 +51,7 @@ final class PanelController {
         showNetwork = defaults.object(forKey: Keys.network) as? Bool ?? true
         showMemory = defaults.object(forKey: Keys.memory) as? Bool ?? true
         showSystem = defaults.object(forKey: Keys.system) as? Bool ?? true
+        showCombined = defaults.object(forKey: Keys.combined) as? Bool ?? false
         openAtLogin = SMAppService.mainApp.status == .enabled
     }
 
@@ -95,7 +104,20 @@ final class PanelController {
             systemPanel?.orderOut(nil)
         }
 
-        store.isActive = showNetwork || showMemory || showSystem
+        if showCombined {
+            if combinedPanel == nil {
+                combinedPanel = GlassPanelWindow(
+                    id: "combined",
+                    size: NSSize(width: 620, height: 400),
+                    rootView: CombinedPanelView(store: store)
+                )
+            }
+            combinedPanel?.orderFrontRegardless()
+        } else {
+            combinedPanel?.orderOut(nil)
+        }
+
+        store.isActive = showNetwork || showMemory || showSystem || showCombined
     }
 
     private func applyOpenAtLogin() {
@@ -116,5 +138,6 @@ final class PanelController {
         static let network = "panel.network.visible"
         static let memory = "panel.memory.visible"
         static let system = "panel.system.visible"
+        static let combined = "panel.combined.visible"
     }
 }

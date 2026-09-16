@@ -3,10 +3,11 @@ import SwiftUI
 struct PanelChrome<Content: View>: View {
     let title: String
     let symbol: String
+    var compact: Bool = false
     @ViewBuilder var content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: compact ? 8 : 10) {
             HStack(spacing: 6) {
                 Image(systemName: symbol)
                     .font(.caption.weight(.semibold))
@@ -18,8 +19,8 @@ struct PanelChrome<Content: View>: View {
             }
             content
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(compact ? 0 : 14)
+        .frame(maxWidth: .infinity, maxHeight: compact ? nil : .infinity, alignment: .topLeading)
         .background(.clear)
     }
 }

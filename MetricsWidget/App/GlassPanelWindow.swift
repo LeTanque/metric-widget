@@ -78,11 +78,12 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             switch panelID {
             case "memory": cascade = 360
             case "system": cascade = 680
+            case "combined": cascade = 24
             default: cascade = 24
             }
             let origin = NSPoint(
                 x: screen.minX + cascade,
-                y: screen.minY + 28
+                y: panelID == "combined" ? screen.minY + 300 : screen.minY + 28
             )
             setFrameOrigin(origin)
         }

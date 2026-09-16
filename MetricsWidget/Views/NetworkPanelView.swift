@@ -3,11 +3,12 @@ import SwiftUI
 
 struct NetworkPanelView: View {
     var store: MetricsStore
+    var embedded: Bool = false
 
     var body: some View {
         let snap = store.snapshot
-        PanelChrome(title: "Network", symbol: "waveform.path.ecg") {
-            VStack(alignment: .leading, spacing: 10) {
+        PanelChrome(title: "Network", symbol: "waveform.path.ecg", compact: embedded) {
+            VStack(alignment: .leading, spacing: embedded ? 8 : 10) {
                 HStack(alignment: .firstTextBaseline) {
                     RateLabel(title: "Down", value: ByteFormat.perSecond(snap.downloadBytesPerSec), color: .blue)
                     Spacer()
@@ -36,7 +37,7 @@ struct NetworkPanelView: View {
                 .chartPlotStyle { plot in
                     plot.background(.clear)
                 }
-                .frame(height: 72)
+                .frame(height: embedded ? 56 : 72)
 
                 VStack(alignment: .leading, spacing: 3) {
                     LabeledValue(label: "Interface", value: snap.interfaceName)

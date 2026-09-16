@@ -10,6 +10,7 @@ struct MetricsWidgetApp: App {
             Toggle("Network", isOn: $panels.showNetwork)
             Toggle("App Memory", isOn: $panels.showMemory)
             Toggle("CPU, RAM & Storage", isOn: $panels.showSystem)
+            Toggle("All in one", isOn: $panels.showCombined)
             Divider()
             Toggle("Open at Login", isOn: $panels.openAtLogin)
             Divider()

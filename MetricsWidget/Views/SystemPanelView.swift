@@ -3,11 +3,12 @@ import SwiftUI
 
 struct SystemPanelView: View {
     var store: MetricsStore
+    var embedded: Bool = false
 
     var body: some View {
         let snap = store.snapshot
-        PanelChrome(title: "System", symbol: "gauge.with.dots.needle.67percent") {
-            VStack(alignment: .leading, spacing: 12) {
+        PanelChrome(title: "System", symbol: "gauge.with.dots.needle.67percent", compact: embedded) {
+            VStack(alignment: .leading, spacing: embedded ? 10 : 12) {
                 HStack(alignment: .center, spacing: 14) {
                     Chart {
                         SectorMark(
@@ -24,7 +25,7 @@ struct SystemPanelView: View {
                         .foregroundStyle(Color.secondary.opacity(0.28))
                     }
                     .chartLegend(.hidden)
-                    .frame(width: 92, height: 92)
+                    .frame(width: embedded ? 76 : 92, height: embedded ? 76 : 92)
                     .overlay {
                         VStack(spacing: 0) {
                             Text("Disk")
