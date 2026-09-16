@@ -12,6 +12,21 @@ swift build -c debug --product MetricsWidget
 
 Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcode project). Requires macOS 15+.
 
+## Usage tile
+
+Menu bar → **Usage** and **Settings…**. Enable Cursor and/or OpenAI (Anthropic is optional).
+
+- **Cursor** reads the signed-in session from `state.vscdb` and calls Cursor’s unofficial current-period usage endpoint. Sign in to Cursor on this Mac; no extra key.
+- **OpenAI / Anthropic** keys are generic Keychain passwords (`service` `com.frankmartinez.MetricsWidget`, accounts `openai.admin` and `anthropic.admin`). OpenAI needs an **Admin** key with `api.usage.read`. Anthropic needs `sk-ant-admin…`.
+
+Equivalent CLI:
+
+```bash
+security add-generic-password -s com.frankmartinez.MetricsWidget -a openai.admin -w
+```
+
+Usage refreshes about every 10 minutes.
+
 ## Build plan
 
 Native macOS widgets are Swift + SwiftUI (WidgetKit). That is not what this project is. WidgetKit is a snapshot renderer (~40–70 reloads/day). A network graph, CPU bar, and top-memory list need a tiny always-running app, the same pattern as Stats / iStat Menus.

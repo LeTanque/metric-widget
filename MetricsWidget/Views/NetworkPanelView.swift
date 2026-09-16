@@ -4,15 +4,17 @@ import SwiftUI
 struct NetworkPanelView: View {
     var store: MetricsStore
     var embedded: Bool = false
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let snap = store.snapshot
+        let p = themes.palette
         PanelChrome(title: "Network", symbol: "waveform.path.ecg", compact: embedded) {
             VStack(alignment: .leading, spacing: embedded ? 8 : 10) {
                 HStack(alignment: .firstTextBaseline) {
-                    RateLabel(title: "Down", value: ByteFormat.perSecond(snap.downloadBytesPerSec), color: .blue)
+                    RateLabel(title: "Down", value: ByteFormat.perSecond(snap.downloadBytesPerSec), color: p.down)
                     Spacer()
-                    RateLabel(title: "Up", value: ByteFormat.perSecond(snap.uploadBytesPerSec), color: .green)
+                    RateLabel(title: "Up", value: ByteFormat.perSecond(snap.uploadBytesPerSec), color: p.up)
                 }
 
                 Chart(snap.networkHistory) { point in
@@ -21,14 +23,14 @@ struct NetworkPanelView: View {
                         y: .value("Down", point.download),
                         series: .value("Dir", "Down")
                     )
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(p.down)
                     .interpolationMethod(.catmullRom)
                     LineMark(
                         x: .value("t", point.id),
                         y: .value("Up", point.upload),
                         series: .value("Dir", "Up")
                     )
-                    .foregroundStyle(.green)
+                    .foregroundStyle(p.up)
                     .interpolationMethod(.catmullRom)
                 }
                 .chartLegend(.hidden)
@@ -53,14 +55,17 @@ private struct RateLabel: View {
     let title: String
     let value: String
     let color: Color
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let p = themes.palette
         VStack(alignment: .leading, spacing: 1) {
             Text(title.uppercased())
-                .font(.caption2.weight(.semibold))
+                .font(p.caption2Font.weight(.semibold))
                 .foregroundStyle(color)
             Text(value)
-                .font(.callout.monospacedDigit().weight(.medium))
+                .font(p.bodyFont)
+                .foregroundStyle(p.primary)
         }
     }
 }
@@ -68,15 +73,18 @@ private struct RateLabel: View {
 private struct LabeledValue: View {
     let label: String
     let value: String
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let p = themes.palette
         HStack(alignment: .firstTextBaseline) {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(p.captionFont)
+                .foregroundStyle(p.secondary)
             Spacer()
             Text(value)
-                .font(.caption.monospacedDigit())
+                .font(p.valueFont)
+                .foregroundStyle(p.primary)
                 .textSelection(.enabled)
         }
     }

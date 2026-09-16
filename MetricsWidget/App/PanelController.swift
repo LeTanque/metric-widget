@@ -7,6 +7,17 @@ import SwiftUI
 @Observable
 final class PanelController {
     let store = MetricsStore()
+    let usageStore = UsageStore()
+    let usagePreferences = UsagePreferences()
+    let themeStore = ThemeStore()
+
+    var themeID: ThemeID {
+        get { themeStore.id }
+        set {
+            themeStore.id = newValue
+            applyThemeToWindows()
+        }
+    }
 
     var showNetwork: Bool {
         didSet {
@@ -36,6 +47,13 @@ final class PanelController {
         }
     }
 
+    var showUsage: Bool {
+        didSet {
+            UserDefaults.standard.set(showUsage, forKey: Keys.usage)
+            applyVisibility()
+        }
+    }
+
     var openAtLogin: Bool {
         didSet { applyOpenAtLogin() }
     }
@@ -44,6 +62,8 @@ final class PanelController {
     private var memoryPanel: GlassPanelWindow?
     private var systemPanel: GlassPanelWindow?
     private var combinedPanel: GlassPanelWindow?
+    private var usagePanel: GlassPanelWindow?
+    private var settingsWindow: NSWindow?
     private var started = false
 
     init() {
@@ -52,6 +72,7 @@ final class PanelController {
         showMemory = defaults.object(forKey: Keys.memory) as? Bool ?? true
         showSystem = defaults.object(forKey: Keys.system) as? Bool ?? true
         showCombined = defaults.object(forKey: Keys.combined) as? Bool ?? false
+        showUsage = defaults.object(forKey: Keys.usage) as? Bool ?? true
         openAtLogin = SMAppService.mainApp.status == .enabled
     }
 
@@ -70,6 +91,7 @@ final class PanelController {
                 networkPanel = GlassPanelWindow(
                     id: "network",
                     size: NSSize(width: 332, height: 228),
+                    themeStore: themeStore,
                     rootView: NetworkPanelView(store: store)
                 )
             }
@@ -83,6 +105,7 @@ final class PanelController {
                 memoryPanel = GlassPanelWindow(
                     id: "memory",
                     size: NSSize(width: 292, height: 268),
+                    themeStore: themeStore,
                     rootView: AppMemoryPanelView(store: store)
                 )
             }
@@ -96,6 +119,7 @@ final class PanelController {
                 systemPanel = GlassPanelWindow(
                     id: "system",
                     size: NSSize(width: 300, height: 248),
+                    themeStore: themeStore,
                     rootView: SystemPanelView(store: store)
                 )
             }
@@ -108,8 +132,9 @@ final class PanelController {
             if combinedPanel == nil {
                 combinedPanel = GlassPanelWindow(
                     id: "combined",
-                    size: NSSize(width: 620, height: 400),
-                    rootView: CombinedPanelView(store: store)
+                    size: NSSize(width: 640, height: 468),
+                    themeStore: themeStore,
+                    rootView: CombinedPanelView(store: store, usageStore: usageStore)
                 )
             }
             combinedPanel?.orderFrontRegardless()
@@ -117,7 +142,54 @@ final class PanelController {
             combinedPanel?.orderOut(nil)
         }
 
+        if showUsage {
+            if usagePanel == nil {
+                usagePanel = GlassPanelWindow(
+                    id: "usage",
+                    size: NSSize(width: 340, height: 300),
+                    themeStore: themeStore,
+                    rootView: UsagePanelView(store: usageStore)
+                )
+            }
+            usagePanel?.orderFrontRegardless()
+        } else {
+            usagePanel?.orderOut(nil)
+        }
+
         store.isActive = showNetwork || showMemory || showSystem || showCombined
+        usageStore.isActive = showUsage || showCombined
+        applyThemeToWindows()
+    }
+
+    private func applyThemeToWindows() {
+        networkPanel?.applyThemeChrome()
+        memoryPanel?.applyThemeChrome()
+        systemPanel?.applyThemeChrome()
+        combinedPanel?.applyThemeChrome()
+        usagePanel?.applyThemeChrome()
+    }
+
+    func openSettings() {
+        usagePreferences.reload()
+        let root = SettingsView(
+            preferences: usagePreferences,
+            usagePanelVisible: showUsage || showCombined
+        ) { [weak self] in
+            self?.usageStore.refreshNow()
+        }
+        if let settingsWindow {
+            settingsWindow.contentViewController = NSHostingController(rootView: root)
+        } else {
+            let window = NSWindow(contentViewController: NSHostingController(rootView: root))
+            window.title = "Metrics Settings"
+            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.setContentSize(NSSize(width: 520, height: 520))
+            window.center()
+            window.isReleasedWhenClosed = false
+            settingsWindow = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
 
     private func applyOpenAtLogin() {
@@ -139,5 +211,6 @@ final class PanelController {
         static let memory = "panel.memory.visible"
         static let system = "panel.system.visible"
         static let combined = "panel.combined.visible"
+        static let usage = "panel.usage.visible"
     }
 }

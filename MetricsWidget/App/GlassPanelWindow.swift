@@ -1,12 +1,32 @@
 import AppKit
 import SwiftUI
 
+private struct ThemedRoot<Content: View>: View {
+    var themes: ThemeStore
+    var content: Content
+
+    var body: some View {
+        Group {
+            if themes.id == .matrix {
+                content
+                    .environment(themes)
+                    .environment(\.colorScheme, .dark)
+            } else {
+                content
+                    .environment(themes)
+            }
+        }
+    }
+}
+
 @MainActor
 final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     let panelID: String
+    private let themeStore: ThemeStore
 
-    init<Content: View>(id: String, size: NSSize, rootView: Content) {
+    init<Content: View>(id: String, size: NSSize, themeStore: ThemeStore, rootView: Content) {
         self.panelID = id
+        self.themeStore = themeStore
         super.init(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -28,7 +48,9 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.desktopIconWindow)) + 1)
 
-        let hosting = NSHostingView(rootView: rootView)
+        let hosting = NSHostingView(
+            rootView: ThemedRoot(themes: themeStore, content: rootView)
+        )
         hosting.frame = NSRect(origin: .zero, size: size)
 
         if #available(macOS 26.0, *) {
@@ -52,6 +74,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
         setContentSize(size)
         restoreFrame(defaultSize: size)
+        applyThemeChrome()
         delegate = self
     }
 
@@ -60,6 +83,12 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
     func windowDidMove(_ notification: Notification) {
         persistFrame()
+    }
+
+    func applyThemeChrome() {
+        if #available(macOS 26.0, *) {
+            (contentView as? NSGlassEffectView)?.tintColor = themeStore.palette.glassTint
+        }
     }
 
     private func restoreFrame(defaultSize: NSSize) {
@@ -79,6 +108,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             case "memory": cascade = 360
             case "system": cascade = 680
             case "combined": cascade = 24
+            case "usage": cascade = 1010
             default: cascade = 24
             }
             let origin = NSPoint(

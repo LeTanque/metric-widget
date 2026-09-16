@@ -11,7 +11,17 @@ struct MetricsWidgetApp: App {
             Toggle("App Memory", isOn: $panels.showMemory)
             Toggle("CPU, RAM & Storage", isOn: $panels.showSystem)
             Toggle("All in one", isOn: $panels.showCombined)
+            Toggle("Usage", isOn: $panels.showUsage)
             Divider()
+            Picker("Theme", selection: $panels.themeID) {
+                ForEach(ThemeID.allCases) { theme in
+                    Text(theme.menuTitle).tag(theme)
+                }
+            }
+            Divider()
+            Button("Settings…") {
+                panels.openSettings()
+            }
             Toggle("Open at Login", isOn: $panels.openAtLogin)
             Divider()
             Button("Quit Metrics") {

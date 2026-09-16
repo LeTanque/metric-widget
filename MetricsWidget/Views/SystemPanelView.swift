@@ -4,9 +4,11 @@ import SwiftUI
 struct SystemPanelView: View {
     var store: MetricsStore
     var embedded: Bool = false
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let snap = store.snapshot
+        let p = themes.palette
         PanelChrome(title: "System", symbol: "gauge.with.dots.needle.67percent", compact: embedded) {
             VStack(alignment: .leading, spacing: embedded ? 10 : 12) {
                 HStack(alignment: .center, spacing: 14) {
@@ -16,34 +18,37 @@ struct SystemPanelView: View {
                             innerRadius: .ratio(0.58),
                             angularInset: 1.2
                         )
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(p.accent)
                         SectorMark(
                             angle: .value("Free", snap.diskFreeBytes),
                             innerRadius: .ratio(0.58),
                             angularInset: 1.2
                         )
-                        .foregroundStyle(Color.secondary.opacity(0.28))
+                        .foregroundStyle(p.track)
                     }
                     .chartLegend(.hidden)
                     .frame(width: embedded ? 76 : 92, height: embedded ? 76 : 92)
                     .overlay {
                         VStack(spacing: 0) {
                             Text("Disk")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .font(p.caption2Font)
+                                .foregroundStyle(p.secondary)
                             Text(usedPercent(snap))
-                                .font(.caption.monospacedDigit().weight(.semibold))
+                                .font(p.valueFont.weight(.semibold))
+                                .foregroundStyle(p.primary)
                         }
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Storage")
-                            .font(.caption.weight(.semibold))
+                            .font(p.captionFont.weight(.semibold))
+                            .foregroundStyle(p.primary)
                         Text("\(ByteFormat.bytes(snap.diskUsedBytes)) used")
-                            .font(.caption.monospacedDigit())
+                            .font(p.valueFont)
+                            .foregroundStyle(p.primary)
                         Text("\(ByteFormat.bytes(snap.diskFreeBytes)) free")
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .font(p.valueFont)
+                            .foregroundStyle(p.secondary)
                     }
                     Spacer(minLength: 0)
                 }

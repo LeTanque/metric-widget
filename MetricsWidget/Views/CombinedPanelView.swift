@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CombinedPanelView: View {
     var store: MetricsStore
+    var usageStore: UsageStore
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -16,8 +17,13 @@ struct CombinedPanelView: View {
             Divider()
                 .opacity(0.35)
 
-            AppMemoryPanelView(store: store, embedded: true, rowLimit: 8)
-                .frame(width: 220, alignment: .topLeading)
+            VStack(alignment: .leading, spacing: 12) {
+                AppMemoryPanelView(store: store, embedded: true, rowLimit: 5)
+                Divider()
+                    .opacity(0.35)
+                UsagePanelView(store: usageStore, embedded: true)
+            }
+            .frame(width: 240, alignment: .topLeading)
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
