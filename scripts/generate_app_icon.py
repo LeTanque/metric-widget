@@ -22,6 +22,8 @@ ACCENT = (89, 255, 71)  # 0.35, 1.0, 0.28
 PRIMARY = (140, 255, 115)  # 0.55, 1.0, 0.45
 GLOW = (35, 200, 55)
 GRID = (8, 42, 14, 90)
+# Max width/height on canvas after uniform scale (gauge proportions unchanged).
+GAUGE_SCALE = 0.84
 
 
 def luminance(rgb: tuple[int, int, int]) -> float:
@@ -39,7 +41,30 @@ def extract_gauge_alpha(source: Image.Image) -> Image.Image:
         for x in range(w):
             if luminance(px[x, y]) < 210:
                 apx[x, y] = 255
-    return alpha
+    return trim_content_padding(alpha)
+
+
+def trim_content_padding(alpha: Image.Image, pad_ratio: float = 0.03) -> Image.Image:
+    """Drop empty margin from the stock image; crop box keeps gauge aspect ratio."""
+    bbox = alpha.getbbox()
+    if bbox is None:
+        return alpha
+    x0, y0, x1, y1 = bbox
+    w, h = alpha.size
+    pad = max(2, int(max(x1 - x0, y1 - y0) * pad_ratio))
+    x0 = max(0, x0 - pad)
+    y0 = max(0, y0 - pad)
+    x1 = min(w, x1 + pad)
+    y1 = min(h, y1 + pad)
+    return alpha.crop((x0, y0, x1, y1))
+
+
+def scale_alpha_uniform(alpha: Image.Image, max_px: int) -> Image.Image:
+    w, h = alpha.size
+    scale = min(max_px / w, max_px / h)
+    nw = max(1, int(w * scale))
+    nh = max(1, int(h * scale))
+    return alpha.resize((nw, nh), Image.Resampling.LANCZOS)
 
 
 def matrix_background(size: int) -> Image.Image:
@@ -75,22 +100,23 @@ def matrix_background(size: int) -> Image.Image:
 
 
 def tint_gauge(alpha: Image.Image, size: int) -> Image.Image:
-    gauge_w = int(size * 0.62)
-    alpha_resized = alpha.resize((gauge_w, gauge_w), Image.Resampling.LANCZOS)
+    max_px = int(size * GAUGE_SCALE)
+    alpha_resized = scale_alpha_uniform(alpha, max_px)
+    gw, gh = alpha_resized.size
 
-    colored = Image.new("RGBA", (gauge_w, gauge_w), ACCENT + (255,))
+    colored = Image.new("RGBA", (gw, gh), ACCENT + (255,))
     colored.putalpha(alpha_resized)
 
-    glow_layer = Image.new("RGBA", (gauge_w, gauge_w), GLOW + (255,))
+    glow_layer = Image.new("RGBA", (gw, gh), GLOW + (255,))
     glow_layer.putalpha(alpha_resized.filter(ImageFilter.GaussianBlur(radius=max(2, size // 128))))
     glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(radius=max(3, size // 64)))
 
-    highlight = Image.new("RGBA", (gauge_w, gauge_w), PRIMARY + (255,))
+    highlight = Image.new("RGBA", (gw, gh), PRIMARY + (255,))
     highlight.putalpha(alpha_resized.filter(ImageFilter.MinFilter(3)))
 
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    cx = (size - gauge_w) // 2
-    cy = (size - gauge_w) // 2 + int(size * 0.02)
+    cx = (size - gw) // 2
+    cy = (size - gh) // 2
 
     for layer, opacity in ((glow_layer, 255), (colored, 255), (highlight, 140)):
         if opacity < 255:
