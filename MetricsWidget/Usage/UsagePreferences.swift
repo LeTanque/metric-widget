@@ -10,6 +10,7 @@ struct UsageSaveResult {
 @MainActor
 final class UsagePreferences {
     var cursorEnabled: Bool
+    var grokBotEnabled: Bool
     var openaiEnabled: Bool
     var anthropicEnabled: Bool
     var openaiKey: String
@@ -18,6 +19,7 @@ final class UsagePreferences {
     init() {
         let defaults = UserDefaults.standard
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
+        grokBotEnabled = defaults.object(forKey: Keys.grokBot) as? Bool ?? true
         openaiEnabled = defaults.object(forKey: Keys.openai) as? Bool ?? true
         anthropicEnabled = defaults.object(forKey: Keys.anthropic) as? Bool ?? false
         openaiKey = ""
@@ -28,6 +30,7 @@ final class UsagePreferences {
     func reload() {
         let defaults = UserDefaults.standard
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
+        grokBotEnabled = defaults.object(forKey: Keys.grokBot) as? Bool ?? true
         openaiEnabled = defaults.object(forKey: Keys.openai) as? Bool ?? true
         anthropicEnabled = defaults.object(forKey: Keys.anthropic) as? Bool ?? false
         openaiKey = KeychainStore.password(account: KeychainAccount.openAI) ?? ""
@@ -36,6 +39,7 @@ final class UsagePreferences {
 
     func save() -> UsageSaveResult {
         UserDefaults.standard.set(cursorEnabled, forKey: Keys.cursor)
+        UserDefaults.standard.set(grokBotEnabled, forKey: Keys.grokBot)
         UserDefaults.standard.set(openaiEnabled, forKey: Keys.openai)
         UserDefaults.standard.set(anthropicEnabled, forKey: Keys.anthropic)
 
@@ -65,6 +69,7 @@ final class UsagePreferences {
 
     private enum Keys {
         static let cursor = "usage.cursor.enabled"
+        static let grokBot = "usage.grokbot.enabled"
         static let openai = "usage.openai.enabled"
         static let anthropic = "usage.anthropic.enabled"
     }

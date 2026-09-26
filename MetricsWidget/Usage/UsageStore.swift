@@ -46,6 +46,7 @@ final class UsageStore {
         let prefs = UsagePreferences()
         let snapshot = UsagePreferencesSnapshot(
             cursorEnabled: prefs.cursorEnabled,
+            grokBotEnabled: prefs.grokBotEnabled,
             openaiEnabled: prefs.openaiEnabled,
             anthropicEnabled: prefs.anthropicEnabled,
             openaiKey: prefs.openaiKey,

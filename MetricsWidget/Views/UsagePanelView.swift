@@ -10,7 +10,7 @@ struct UsagePanelView: View {
         PanelChrome(title: "Usage", symbol: "circle.bottomhalf.filled", compact: embedded) {
             VStack(alignment: .leading, spacing: 12) {
                 if store.snapshot.providers.isEmpty {
-                    Text("Turn on Cursor, OpenAI, or Anthropic in Settings.")
+                    Text("Turn on Cursor, Grok Bot, OpenAI, or Anthropic in Settings.")
                         .font(p.captionFont)
                         .foregroundStyle(p.secondary)
                 } else {

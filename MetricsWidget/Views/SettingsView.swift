@@ -11,6 +11,7 @@ struct SettingsView: View {
         Form {
             Section("Providers") {
                 Toggle("Cursor (signed-in app session)", isOn: $preferences.cursorEnabled)
+                Toggle("Grok Bot (weekly included quota)", isOn: $preferences.grokBotEnabled)
                 Toggle("OpenAI", isOn: $preferences.openaiEnabled)
                 Toggle("Anthropic", isOn: $preferences.anthropicEnabled)
             }
@@ -58,7 +59,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             } footer: {
-                Text("Cursor usage is unofficial: this app reads the local Cursor session and calls the same dashboard endpoint the website uses. It can break when Cursor changes that API. Keys never leave the Keychain except to those providers.")
+                Text("Cursor and Grok Bot usage are unofficial: this app reads the local Cursor session and calls the same dashboard endpoints the website uses (monthly plan meter for Cursor, weekly Sand pool for Grok Bot). Grok Bot’s weekly allowance is separate from Cursor’s monthly included bar; after weekly Grok runs out, spill may use Cursor on-demand. These calls can break when Cursor changes the API. Keys never leave the Keychain except to OpenAI and Anthropic.")
             }
         }
         .formStyle(.grouped)
