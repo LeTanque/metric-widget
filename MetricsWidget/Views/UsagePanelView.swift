@@ -55,12 +55,34 @@ private struct ProviderUsageBlock: View {
                 Text(error)
                     .font(p.captionFont)
                     .foregroundStyle(p.warning)
-            } else if let percent = provider.percent {
-                MeterBar(title: provider.detail, percent: percent, detail: "")
             } else {
-                Text(provider.detail)
-                    .font(p.valueFont.weight(.medium))
-                    .foregroundStyle(p.primary)
+                if let percent = provider.percent {
+                    MeterBar(title: "Included spend remaining", percent: percent, detail: provider.detail)
+                } else {
+                    Text(provider.detail)
+                        .font(p.valueFont.weight(.medium))
+                        .foregroundStyle(p.primary)
+                }
+
+                if !provider.quotaLines.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(provider.quotaLines, id: \.self) { line in
+                            MeterBar(
+                                title: line.label,
+                                percent: line.percentUsed,
+                                detail: ""
+                            )
+                        }
+                    }
+                    .padding(.top, 4)
+                }
+
+                if let footnote = provider.footnote {
+                    Text(footnote)
+                        .font(p.caption2Font)
+                        .foregroundStyle(p.tertiary)
+                        .padding(.top, 2)
+                }
             }
         }
     }

@@ -1,5 +1,11 @@
 import Foundation
 
+/// One dashboard-style included pool (percent **used**, matching cursor.com/plan usage bars).
+struct UsageQuotaLine: Sendable, Hashable {
+    var label: String
+    var percentUsed: Double
+}
+
 struct ProviderUsage: Identifiable, Sendable, Hashable {
     var id: String
     var title: String
@@ -8,6 +14,9 @@ struct ProviderUsage: Identifiable, Sendable, Hashable {
     var percent: Double?
     var resetLabel: String
     var error: String?
+    /// Included-plan quota bars (Cursor Models / Other Models). Empty for non-Cursor providers.
+    var quotaLines: [UsageQuotaLine] = []
+    var footnote: String?
 
     static func placeholder(id: String, title: String, message: String) -> ProviderUsage {
         ProviderUsage(
@@ -17,7 +26,9 @@ struct ProviderUsage: Identifiable, Sendable, Hashable {
             detail: message,
             percent: nil,
             resetLabel: "",
-            error: nil
+            error: nil,
+            quotaLines: [],
+            footnote: nil
         )
     }
 }
