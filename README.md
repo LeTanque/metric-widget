@@ -16,7 +16,7 @@ Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcod
 
 Menu bar → **Usage** and **Settings…**. Enable Cursor and/or OpenAI (Anthropic is optional).
 
-- **Cursor** reads the signed-in session from `state.vscdb` and calls Cursor’s unofficial current-period usage endpoint. Sign in to Cursor on this Mac; no extra key.
+- **Cursor** reads the signed-in session from `state.vscdb` and calls Cursor’s unofficial current-period usage endpoint. Sign in to Cursor on this Mac; no extra key. The usage bar shows **remaining** included quota (full = none used yet; empty = included limit consumed). Spend beyond the included allowance is labeled “beyond included”, not “bonus”.
 - **OpenAI / Anthropic** keys are generic Keychain passwords (`service` `com.frankmartinez.MetricsWidget`, accounts `openai.admin` and `anthropic.admin`). OpenAI needs an **Admin** key with `api.usage.read`. Anthropic needs `sk-ant-admin…`.
 
 Equivalent CLI:

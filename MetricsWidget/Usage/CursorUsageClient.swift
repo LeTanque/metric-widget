@@ -45,26 +45,38 @@ enum CursorUsageClient {
 
         let planUsage = json["planUsage"] as? [String: Any] ?? [:]
         let included = cents(planUsage["includedSpend"])
-        let bonus = cents(planUsage["bonusSpend"])
-        let total = cents(planUsage["totalSpend"]) ?? ((included ?? 0) + (bonus ?? 0))
+        let extraSpend = cents(planUsage["bonusSpend"])
+        let total = cents(planUsage["totalSpend"]) ?? ((included ?? 0) + (extraSpend ?? 0))
         let limit = cents(planUsage["limit"])
         let remaining = cents(planUsage["remaining"])
 
         var percent: Double?
-        if let limit, limit > 0, let included {
-            percent = min(100, included / limit * 100)
+        var remainingIncluded: Double?
+        if let limit, limit > 0 {
+            let left = includedRemaining(
+                limit: limit,
+                includedSpend: included,
+                apiRemaining: remaining
+            )
+            remainingIncluded = left
+            percent = min(100, max(0, left / limit * 100))
         } else if let raw = number(planUsage["totalPercentUsed"]) {
-            percent = raw > 1.5 ? raw : raw * 100
+            let used = raw > 1.5 ? raw : raw * 100
+            percent = min(100, max(0, 100 - used))
         }
 
-        var detail = UsageFormat.usd(included ?? total)
-        if let limit, limit > 0 {
-            detail += " / \(UsageFormat.usd(limit))"
-        } else if let remaining {
-            detail += " · \(UsageFormat.usd(remaining)) left"
+        var detail: String
+        if let limit, limit > 0, let left = remainingIncluded {
+            let used = included ?? max(0, limit - left)
+            detail = "\(UsageFormat.usd(used)) / \(UsageFormat.usd(limit)) · \(UsageFormat.usd(left)) left"
+        } else {
+            detail = UsageFormat.usd(included ?? total)
+            if let remaining {
+                detail += " · \(UsageFormat.usd(remaining)) left"
+            }
         }
-        if let bonus, bonus > 0 {
-            detail += " · +\(UsageFormat.usd(bonus)) bonus"
+        if let extraSpend, extraSpend > 0 {
+            detail += " · +\(UsageFormat.usd(extraSpend)) beyond included"
         }
 
         let reset = parseCursorDate(json["billingCycleEnd"])
@@ -133,6 +145,24 @@ enum CursorUsageClient {
             }
         }
         return nil
+    }
+
+    /// Included quota still available this period (USD). Prefers API `remaining` when it matches limit − used.
+    private static func includedRemaining(
+        limit: Double,
+        includedSpend: Double?,
+        apiRemaining: Double?
+    ) -> Double {
+        let fromIncluded = max(0, limit - (includedSpend ?? 0))
+        guard let apiRemaining else { return fromIncluded }
+        let tolerance = 0.02
+        if abs(apiRemaining - fromIncluded) <= tolerance {
+            return min(limit, max(0, apiRemaining))
+        }
+        if includedSpend == nil, apiRemaining >= 0, apiRemaining <= limit {
+            return apiRemaining
+        }
+        return fromIncluded
     }
 
     private static func cents(_ value: Any?) -> Double? {
