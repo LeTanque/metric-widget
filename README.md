@@ -14,9 +14,10 @@ Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcod
 
 ## Usage tile
 
-Menu bar → **Usage** and **Settings…**. Enable Cursor and/or OpenAI (Anthropic is optional).
+Menu bar → **Usage** and **Settings…**. Enable Cursor, Grok Bot, and/or OpenAI (Anthropic is optional).
 
-- **Cursor** reads the signed-in session from `state.vscdb` and calls Cursor’s unofficial current-period usage endpoint. Sign in to Cursor on this Mac; no extra key. The usage bar shows **remaining** included quota (full = none used yet; empty = included limit consumed). Spend beyond the included allowance is labeled “beyond included”, not “bonus”.
+- **Cursor** reads the signed-in session from `state.vscdb` and calls Cursor’s unofficial `GetCurrentPeriodUsage` endpoint. Sign in to Cursor on this Mac; no extra key. The usage bar shows **remaining** included quota (full = none used yet; empty = included limit consumed). Spend beyond the included allowance is labeled “beyond included”, not “bonus”.
+- **Grok Bot** uses the same Cursor session token and calls the unofficial `GetSandUsageStatus` endpoint. It tracks the **weekly** Grok Bot included pool (`usagePercent` is used share; the bar shows remaining). That meter is separate from Cursor’s monthly plan bar; after weekly Grok runs out, usage may spill to shared Cursor on-demand (not shown on this tile). Accounts with no Sand allowance show a placeholder instead of a bar.
 - **OpenAI / Anthropic** keys are generic Keychain passwords (`service` `com.frankmartinez.MetricsWidget`, accounts `openai.admin` and `anthropic.admin`). OpenAI needs an **Admin** key with `api.usage.read`. Anthropic needs `sk-ant-admin…`.
 
 Equivalent CLI:

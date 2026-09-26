@@ -6,6 +6,9 @@ enum UsageSampler {
         if preferences.cursorEnabled {
             providers.append(CursorUsageClient.fetch())
         }
+        if preferences.grokBotEnabled {
+            providers.append(GrokBotUsageClient.fetch())
+        }
         if preferences.openaiEnabled {
             providers.append(OpenAIUsageClient.fetch(apiKey: preferences.openaiKey))
         }
@@ -18,6 +21,7 @@ enum UsageSampler {
 
 struct UsagePreferencesSnapshot: Sendable {
     var cursorEnabled: Bool
+    var grokBotEnabled: Bool
     var openaiEnabled: Bool
     var anthropicEnabled: Bool
     var openaiKey: String
