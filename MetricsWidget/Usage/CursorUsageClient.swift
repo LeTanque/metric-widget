@@ -82,6 +82,23 @@ enum CursorUsageClient {
         let resetLabel = reset.map(UsageFormat.countdown(to:)) ?? "Reset unknown"
         let subtitle = [plan, email.isEmpty ? nil : email].compactMap { $0 }.joined(separator: " · ")
 
+        let dashboardQuota = CursorDashboardQuotaClient.fetch(
+            accessToken: token,
+            planUsageFallback: planUsage
+        )
+        var quotaLines: [UsageQuotaLine] = []
+        if let cursorModels = dashboardQuota.cursorModelsUsedPercent {
+            quotaLines.append(UsageQuotaLine(label: "Cursor Models", percentUsed: cursorModels))
+        }
+        if let otherModels = dashboardQuota.otherModelsUsedPercent {
+            quotaLines.append(UsageQuotaLine(label: "Other Models", percentUsed: otherModels))
+        }
+
+        var footnote: String?
+        if let onDemand = dashboardQuota.onDemandEnabled {
+            footnote = onDemand ? "On-demand spending enabled" : "On-demand spending disabled"
+        }
+
         return ProviderUsage(
             id: "cursor",
             title: "Cursor",
@@ -89,7 +106,9 @@ enum CursorUsageClient {
             detail: detail,
             percent: percent,
             resetLabel: resetLabel,
-            error: nil
+            error: nil,
+            quotaLines: quotaLines,
+            footnote: footnote
         )
     }
 
@@ -101,7 +120,9 @@ enum CursorUsageClient {
             detail: "—",
             percent: nil,
             resetLabel: "",
-            error: message
+            error: message,
+            quotaLines: [],
+            footnote: nil
         )
     }
 
