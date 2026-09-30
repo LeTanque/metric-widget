@@ -11,7 +11,7 @@ final class PanelSizeBridge {
 }
 
 private struct ReportPanelSize: ViewModifier {
-    @Environment(PanelSizeBridge.self) private var bridge
+    var bridge: PanelSizeBridge
 
     func body(content: Content) -> some View {
         content.background {
@@ -27,9 +27,9 @@ private struct ReportPanelSize: ViewModifier {
 
 extension View {
     @ViewBuilder
-    func reportPanelContentSize(when enabled: Bool) -> some View {
+    func reportPanelContentSize(when enabled: Bool, bridge: PanelSizeBridge) -> some View {
         if enabled {
-            modifier(ReportPanelSize())
+            modifier(ReportPanelSize(bridge: bridge))
         } else {
             self
         }

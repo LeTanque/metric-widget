@@ -20,7 +20,7 @@ private struct ThemedRoot<Content: View>: View {
                     .environment(sizeBridge)
             }
         }
-        .reportPanelContentSize(when: measureContent)
+        .reportPanelContentSize(when: measureContent, bridge: sizeBridge)
     }
 }
 
