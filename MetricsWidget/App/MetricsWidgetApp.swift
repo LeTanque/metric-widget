@@ -12,6 +12,7 @@ struct MetricsWidgetApp: App {
             Toggle("CPU, RAM & Storage", isOn: $panels.showSystem)
             Toggle("All in one", isOn: $panels.showCombined)
             Toggle("Usage", isOn: $panels.showUsage)
+            Toggle("Clock", isOn: $panels.showClock)
             Divider()
             Picker("Theme", selection: $panels.themeID) {
                 ForEach(ThemeID.allCases) { theme in
@@ -31,6 +32,9 @@ struct MetricsWidgetApp: App {
         }
         .menuBarExtraStyle(.menu)
         .onChange(of: panels.showNetwork, initial: true) { _, _ in
+            panels.start()
+        }
+        .onChange(of: panels.showClock) { _, _ in
             panels.start()
         }
     }

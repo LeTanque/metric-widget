@@ -4,13 +4,29 @@ Lightweight macOS desktop glass panels for live network, memory, CPU, RAM, and s
 
 Menu-bar app (no Dock icon). Toggle each panel, drag them on the desktop, optionally open at login.
 
+**Clock** — optional **world-clock** desktop panels (7-segment LED, zone label, AM/PM + red PM indicator). Enable zones in **Settings → World clocks**; toggle **Clock** in the menu bar. Panel size is free-form (use Metrics Widget for flexible clocks; WidgetKit **Clock Widget** stays on `systemSmall` only).
+
+**Panel sizing** — drag any panel edge/corner to resize (click the panel first so it becomes key). **Usage** also grows/shrinks with provider content when you have not manually resized it.
+
 ## Run
+
+Release build (DoD / daily use on Tank):
+
+```bash
+./build.sh
+ditto build/MetricsWidget.app /Applications/MetricsWidget.app
+open /Applications/MetricsWidget.app
+```
+
+Debug iteration:
 
 ```bash
 swift build -c debug --product MetricsWidget
 ```
 
 Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcode project). Requires macOS 15+.
+
+Feature completion checklist: Terra 1 skill **`metrics-widget-feature-dod`** (`~/git/terra-1/skills/metrics-widget-feature-dod/SKILL.md`) — same UPER + compiled-app smoke pattern as Akashic.
 
 ## Usage tile
 

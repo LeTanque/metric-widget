@@ -9,6 +9,7 @@ final class PanelController {
     let store = MetricsStore()
     let usageStore = UsageStore()
     let usagePreferences = UsagePreferences()
+    let clockPreferences = ClockPreferences()
     let themeStore = ThemeStore()
 
     var themeID: ThemeID {
@@ -54,6 +55,13 @@ final class PanelController {
         }
     }
 
+    var showClock: Bool {
+        didSet {
+            UserDefaults.standard.set(showClock, forKey: Keys.clock)
+            applyVisibility()
+        }
+    }
+
     var openAtLogin: Bool {
         didSet { applyOpenAtLogin() }
     }
@@ -63,6 +71,7 @@ final class PanelController {
     private var systemPanel: GlassPanelWindow?
     private var combinedPanel: GlassPanelWindow?
     private var usagePanel: GlassPanelWindow?
+    private var clockPanels: [String: GlassPanelWindow] = [:]
     private var settingsWindow: NSWindow?
     private var started = false
 
@@ -73,7 +82,14 @@ final class PanelController {
         showSystem = defaults.object(forKey: Keys.system) as? Bool ?? true
         showCombined = defaults.object(forKey: Keys.combined) as? Bool ?? false
         showUsage = defaults.object(forKey: Keys.usage) as? Bool ?? true
+        showClock = defaults.object(forKey: Keys.clock) as? Bool ?? false
+        clockPreferences.reload()
         openAtLogin = SMAppService.mainApp.status == .enabled
+    }
+
+    func refreshClockPanels() {
+        clockPreferences.reload()
+        applyVisibility()
     }
 
     func start() {
@@ -90,7 +106,7 @@ final class PanelController {
             if networkPanel == nil {
                 networkPanel = GlassPanelWindow(
                     id: "network",
-                    size: NSSize(width: 332, height: 228),
+                    layout: .network,
                     themeStore: themeStore,
                     rootView: NetworkPanelView(store: store)
                 )
@@ -104,7 +120,7 @@ final class PanelController {
             if memoryPanel == nil {
                 memoryPanel = GlassPanelWindow(
                     id: "memory",
-                    size: NSSize(width: 292, height: 268),
+                    layout: .memory,
                     themeStore: themeStore,
                     rootView: AppMemoryPanelView(store: store)
                 )
@@ -118,7 +134,7 @@ final class PanelController {
             if systemPanel == nil {
                 systemPanel = GlassPanelWindow(
                     id: "system",
-                    size: NSSize(width: 300, height: 248),
+                    layout: .system,
                     themeStore: themeStore,
                     rootView: SystemPanelView(store: store)
                 )
@@ -132,7 +148,7 @@ final class PanelController {
             if combinedPanel == nil {
                 combinedPanel = GlassPanelWindow(
                     id: "combined",
-                    size: NSSize(width: 640, height: 468),
+                    layout: .combined,
                     themeStore: themeStore,
                     rootView: CombinedPanelView(store: store, usageStore: usageStore)
                 )
@@ -146,7 +162,7 @@ final class PanelController {
             if usagePanel == nil {
                 usagePanel = GlassPanelWindow(
                     id: "usage",
-                    size: NSSize(width: 340, height: 300),
+                    layout: .usage,
                     themeStore: themeStore,
                     rootView: UsagePanelView(store: usageStore)
                 )
@@ -155,6 +171,8 @@ final class PanelController {
         } else {
             usagePanel?.orderOut(nil)
         }
+
+        applyClockVisibility()
 
         store.isActive = showNetwork || showMemory || showSystem || showCombined
         usageStore.isActive = showUsage || showCombined
@@ -167,15 +185,55 @@ final class PanelController {
         systemPanel?.applyThemeChrome()
         combinedPanel?.applyThemeChrome()
         usagePanel?.applyThemeChrome()
+        for panel in clockPanels.values {
+            panel.applyThemeChrome()
+        }
+    }
+
+    private func applyClockVisibility() {
+        let activeIDs = Set(clockPreferences.enabledZones.map(\.panelID))
+
+        if showClock {
+            for zone in clockPreferences.enabledZones.sorted(by: { $0.rawValue < $1.rawValue }) {
+                let panelID = zone.panelID
+                if clockPanels[panelID] == nil {
+                    clockPanels[panelID] = GlassPanelWindow(
+                        id: panelID,
+                        layout: .clock,
+                        themeStore: themeStore,
+                        cornerRadius: 10,
+                        rootView: ClockPanelView(zone: zone)
+                    )
+                }
+                clockPanels[panelID]?.orderFrontRegardless()
+            }
+        }
+
+        for (id, panel) in clockPanels {
+            if !showClock || !activeIDs.contains(id) {
+                panel.orderOut(nil)
+            }
+        }
+
+        let stale = clockPanels.keys.filter { !activeIDs.contains($0) }
+        for id in stale {
+            clockPanels[id]?.close()
+            clockPanels[id] = nil
+        }
     }
 
     func openSettings() {
         usagePreferences.reload()
+        clockPreferences.reload()
         let root = SettingsView(
             preferences: usagePreferences,
-            usagePanelVisible: showUsage || showCombined
+            clockPreferences: clockPreferences,
+            usagePanelVisible: showUsage || showCombined,
+            clockPanelsVisible: showClock
         ) { [weak self] in
             self?.usageStore.refreshNow()
+        } onClockPreferencesChanged: { [weak self] in
+            self?.refreshClockPanels()
         }
         if let settingsWindow {
             settingsWindow.contentViewController = NSHostingController(rootView: root)
@@ -212,5 +270,6 @@ final class PanelController {
         static let system = "panel.system.visible"
         static let combined = "panel.combined.visible"
         static let usage = "panel.usage.visible"
+        static let clock = "panel.clock.visible"
     }
 }

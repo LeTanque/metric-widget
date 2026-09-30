@@ -33,6 +33,7 @@ struct ThemePalette {
     var segmentOn: Color
     var segmentOff: Color
     var segmentGlow: Bool
+    var clockLED: Color
     var glassTint: NSColor?
 
     static let system = ThemePalette(
@@ -53,6 +54,7 @@ struct ThemePalette {
         segmentOn: Color.accentColor,
         segmentOff: Color.secondary.opacity(0.22),
         segmentGlow: false,
+        clockLED: Color(red: 1.0, green: 0.45, blue: 0.05),
         glassTint: nil
     )
 
@@ -74,6 +76,7 @@ struct ThemePalette {
         segmentOn: Color(red: 0.0, green: 0.98, blue: 0.82),
         segmentOff: Color(red: 0.02, green: 0.06, blue: 0.05),
         segmentGlow: true,
+        clockLED: Color(red: 0.35, green: 1.0, blue: 0.28),
         glassTint: NSColor(calibratedRed: 0.05, green: 0.55, blue: 0.12, alpha: 0.55)
     )
 }

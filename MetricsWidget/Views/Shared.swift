@@ -22,7 +22,8 @@ struct PanelChrome<Content: View>: View {
             content
         }
         .padding(compact ? 0 : 14)
-        .frame(maxWidth: .infinity, maxHeight: compact ? nil : .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .fixedSize(horizontal: false, vertical: !compact)
         .foregroundStyle(p.primary)
         .background(.clear)
     }
