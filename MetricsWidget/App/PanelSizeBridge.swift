@@ -6,6 +6,8 @@ final class PanelSizeBridge {
     var onMeasure: ((CGSize) -> Void)?
 
     func report(_ size: CGSize) {
+        guard size.width.isFinite, size.height.isFinite else { return }
+        guard size.width > 0, size.height > 0 else { return }
         onMeasure?(size)
     }
 }

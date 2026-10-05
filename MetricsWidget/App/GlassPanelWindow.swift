@@ -57,6 +57,8 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         )
 
         minSize = layout.minSize
+        contentMinSize = layout.minSize
+        applySizeLimits(Self.maxPanelSize(for: layout))
         userSized = UserDefaults.standard.bool(forKey: Self.userSizedKey(id))
 
         isOpaque = false
@@ -86,8 +88,10 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             )
         )
         if #available(macOS 13.0, *) {
-            hosting.sizingOptions = layout.sizesToContent ? [.intrinsicContentSize] : [.preferredContentSize]
+            hosting.sizingOptions = [.preferredContentSize]
         }
+        hosting.frame = NSRect(origin: .zero, size: layout.defaultSize)
+        hosting.autoresizingMask = [.width, .height]
 
         if #available(macOS 26.0, *) {
             let glass = NSGlassEffectView()
@@ -103,7 +107,6 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             effect.wantsLayer = true
             effect.layer?.cornerRadius = cornerRadius
             effect.layer?.masksToBounds = true
-            hosting.autoresizingMask = [.width, .height]
             effect.addSubview(hosting)
             contentView = effect
         }
@@ -128,6 +131,10 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         persistSize()
     }
 
+    func windowDidChangeScreen(_ notification: Notification) {
+        applySizeLimits(Self.maxPanelSize(for: layout, screen: screen))
+    }
+
     func applyThemeChrome() {
         if #available(macOS 26.0, *) {
             (contentView as? NSGlassEffectView)?.tintColor = themeStore.palette.glassTint
@@ -136,13 +143,30 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
     private func adoptMeasuredContentSize(_ swiftUISize: CGSize) {
         guard layout.sizesToContent else { return }
-        let pad: CGFloat = 12
-        let targetW = max(layout.minSize.width, swiftUISize.width + pad)
-        let targetH = max(layout.minSize.height, swiftUISize.height + pad)
+        guard swiftUISize.width.isFinite, swiftUISize.height.isFinite else { return }
+        guard swiftUISize.width > 0, swiftUISize.height > 0 else { return }
 
-        let needsGrow = targetH > frame.height - 1 || targetW > frame.width - 1
-        let needsShrink = !userSized && (targetH < frame.height - 4 || targetW < frame.width - 4)
-        guard needsGrow || needsShrink else { return }
+        let pad: CGFloat = 12
+        let limit = Self.maxPanelSize(for: layout, screen: screen)
+        let current = contentRect(forFrameRect: frame).size
+        let targetW = Self.axisSize(
+            measured: swiftUISize.width,
+            current: current.width,
+            minLength: layout.minSize.width,
+            maxLength: limit.width,
+            pad: pad,
+            allowShrink: !userSized
+        )
+        let targetH = Self.axisSize(
+            measured: swiftUISize.height,
+            current: current.height,
+            minLength: layout.minSize.height,
+            maxLength: limit.height,
+            pad: pad,
+            allowShrink: !userSized
+        )
+
+        guard abs(targetW - current.width) > 0.5 || abs(targetH - current.height) > 0.5 else { return }
 
         suppressResizeTracking = true
         setContentSize(NSSize(width: targetW, height: targetH))
@@ -153,25 +177,38 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         let defaults = UserDefaults.standard
         let wKey = Self.widthKey(panelID)
         let hKey = Self.heightKey(panelID)
-        if defaults.object(forKey: wKey) != nil, defaults.object(forKey: hKey) != nil {
-            let w = max(layout.minSize.width, defaults.double(forKey: wKey))
-            let h = max(layout.minSize.height, defaults.double(forKey: hKey))
-            return NSSize(width: w, height: h)
+        guard defaults.object(forKey: wKey) != nil, defaults.object(forKey: hKey) != nil else {
+            return fallback
         }
-        return fallback
+        let stored = NSSize(width: defaults.double(forKey: wKey), height: defaults.double(forKey: hKey))
+        let limit = Self.maxPanelSize(for: layout, screen: screen)
+        guard Self.isPlausibleStoredSize(stored, maxSize: limit) else {
+            defaults.removeObject(forKey: wKey)
+            defaults.removeObject(forKey: hKey)
+            defaults.set(false, forKey: Self.userSizedKey(panelID))
+            userSized = false
+            return fallback
+        }
+        return Self.clampSize(stored, minSize: layout.minSize, maxSize: limit)
     }
 
     private func restoreFrame(defaultSize: NSSize) {
-        setContentSize(defaultSize)
+        let size = Self.clampSize(
+            defaultSize,
+            minSize: layout.minSize,
+            maxSize: Self.maxPanelSize(for: layout, screen: screen)
+        )
+        applySizeLimits(Self.maxPanelSize(for: layout, screen: screen))
+        setContentSize(size)
         let defaults = UserDefaults.standard
         let xKey = Self.xKey(panelID)
         let yKey = Self.yKey(panelID)
-        let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+        let screen = visibleScreenFrame()
 
         if defaults.object(forKey: xKey) != nil, defaults.object(forKey: yKey) != nil {
             var origin = NSPoint(x: defaults.double(forKey: xKey), y: defaults.double(forKey: yKey))
-            origin.x = min(max(origin.x, screen.minX), screen.maxX - defaultSize.width)
-            origin.y = min(max(origin.y, screen.minY), screen.maxY - defaultSize.height)
+            origin.x = min(max(origin.x, screen.minX), max(screen.minX, screen.maxX - size.width))
+            origin.y = min(max(origin.y, screen.minY), max(screen.minY, screen.maxY - size.height))
             setFrameOrigin(origin)
         } else {
             let cascade: CGFloat
@@ -197,14 +234,81 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     }
 
     private func persistFrame() {
-        UserDefaults.standard.set(frame.origin.x, forKey: Self.xKey(panelID))
-        UserDefaults.standard.set(frame.origin.y, forKey: Self.yKey(panelID))
+        let screen = visibleScreenFrame()
+        let size = clampedFrameSize()
+        var origin = frame.origin
+        origin.x = min(max(origin.x, screen.minX), max(screen.minX, screen.maxX - size.width))
+        origin.y = min(max(origin.y, screen.minY), max(screen.minY, screen.maxY - size.height))
+        UserDefaults.standard.set(origin.x, forKey: Self.xKey(panelID))
+        UserDefaults.standard.set(origin.y, forKey: Self.yKey(panelID))
         persistSize()
     }
 
     private func persistSize() {
-        UserDefaults.standard.set(frame.width, forKey: Self.widthKey(panelID))
-        UserDefaults.standard.set(frame.height, forKey: Self.heightKey(panelID))
+        let size = clampedFrameSize()
+        UserDefaults.standard.set(size.width, forKey: Self.widthKey(panelID))
+        UserDefaults.standard.set(size.height, forKey: Self.heightKey(panelID))
+    }
+
+    private func clampedFrameSize() -> NSSize {
+        Self.clampSize(
+            frame.size,
+            minSize: layout.minSize,
+            maxSize: Self.maxPanelSize(for: layout, screen: screen)
+        )
+    }
+
+    private func applySizeLimits(_ limit: NSSize) {
+        maxSize = limit
+        contentMaxSize = limit
+    }
+
+    private func visibleScreenFrame() -> NSRect {
+        (screen ?? NSScreen.main)?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+    }
+
+    private static func maxPanelSize(for layout: PanelLayout, screen: NSScreen? = nil) -> NSSize {
+        let visible = (screen ?? NSScreen.main)?.visibleFrame.size ?? NSSize(width: 1280, height: 800)
+        return NSSize(
+            width: max(layout.minSize.width, visible.width),
+            height: max(layout.minSize.height, visible.height)
+        )
+    }
+
+    private static func clampSize(_ size: NSSize, minSize: NSSize, maxSize: NSSize) -> NSSize {
+        NSSize(
+            width: clamp(size.width, min: minSize.width, max: maxSize.width),
+            height: clamp(size.height, min: minSize.height, max: maxSize.height)
+        )
+    }
+
+    private static func clamp(_ value: CGFloat, min: CGFloat, max: CGFloat) -> CGFloat {
+        guard value.isFinite else { return min }
+        return Swift.min(max, Swift.max(min, value))
+    }
+
+    private static func isPlausibleStoredSize(_ size: NSSize, maxSize: NSSize) -> Bool {
+        guard size.width.isFinite, size.height.isFinite else { return false }
+        guard size.width > 0, size.height > 0 else { return false }
+        return size.width <= maxSize.width * 2 && size.height <= maxSize.height * 2
+    }
+
+    private static func axisSize(
+        measured: CGFloat,
+        current: CGFloat,
+        minLength: CGFloat,
+        maxLength: CGFloat,
+        pad: CGFloat,
+        allowShrink: Bool
+    ) -> CGFloat {
+        let padded = measured + pad
+        if measured > current + 1 {
+            return clamp(padded, min: minLength, max: maxLength)
+        }
+        if allowShrink && padded < current - 4 {
+            return clamp(padded, min: minLength, max: maxLength)
+        }
+        return current
     }
 
     private static func xKey(_ id: String) -> String { "panel.\(id).x" }
