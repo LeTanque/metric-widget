@@ -6,7 +6,7 @@ struct LEDSevenSegmentTime: View {
     var timeZone: TimeZone = .current
     var ledColor: Color
     var blinkColon: Bool = true
-    var displayScale: CGFloat = 1
+    var digitHeight: CGFloat
     var segmentThickness: CGFloat = 1
 
     private var timeText: String {
@@ -24,23 +24,56 @@ struct LEDSevenSegmentTime: View {
         return calendar.component(.second, from: date) % 2 == 0
     }
 
+    private var digitSize: CGSize {
+        LEDGlyphMetrics.digitSize(height: digitHeight)
+    }
+
+    private var colonSize: CGSize {
+        LEDGlyphMetrics.colonSize(height: digitHeight)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(timeText.enumerated()), id: \.offset) { _, char in
                 if char == ":" {
-                    LEDColon(color: ledColor, lit: colonLit)
+                    LEDColon(color: ledColor, lit: colonLit, size: colonSize)
                 } else if let digit = char.wholeNumberValue {
-                    LEDDigit(digit: digit, color: ledColor, thicknessScale: segmentThickness)
+                    LEDDigit(digit: digit, color: ledColor, size: digitSize, thicknessScale: segmentThickness)
                 }
             }
         }
-        .scaleEffect(displayScale, anchor: .leading)
+        .frame(
+            width: LEDGlyphMetrics.timeWidth(height: digitHeight),
+            height: digitHeight,
+            alignment: .trailing
+        )
+    }
+}
+
+enum LEDGlyphMetrics {
+    static let digitAspect: CGFloat = 0.58
+    static let colonAspect: CGFloat = 0.35
+    static let hourDigitSlots = 2
+    static let minuteDigitSlots = 2
+
+    static func digitSize(height: CGFloat) -> CGSize {
+        CGSize(width: height * digitAspect, height: height)
+    }
+
+    static func colonSize(height: CGFloat) -> CGSize {
+        CGSize(width: height * colonAspect, height: height)
+    }
+
+    static func timeWidth(height: CGFloat) -> CGFloat {
+        digitSize(height: height).width * CGFloat(hourDigitSlots + minuteDigitSlots)
+            + colonSize(height: height).width
     }
 }
 
 private struct LEDColon: View {
     var color: Color
     var lit: Bool = true
+    var size: CGSize
 
     var body: some View {
         GeometryReader { geo in
@@ -52,13 +85,14 @@ private struct LEDColon: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .aspectRatio(0.35, contentMode: .fit)
+        .frame(width: size.width, height: size.height)
     }
 }
 
 private struct LEDDigit: View {
     var digit: Int
     var color: Color
+    var size: CGSize
     var thicknessScale: CGFloat = 1
 
     private var segments: UInt8 {
@@ -81,7 +115,7 @@ private struct LEDDigit: View {
                 segment(.middle, w: w, h: h, t: t, gap: gap, on: segments & 0b0000001 != 0)
             }
         }
-        .aspectRatio(0.58, contentMode: .fit)
+        .frame(width: size.width, height: size.height)
     }
 
     private enum SegmentKind {
