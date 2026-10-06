@@ -39,8 +39,8 @@ struct PanelLayout {
     )
     static let clock = PanelLayout(
         defaultSize: ClockPanelWindowSize.size,
-        minSize: NSSize(width: 120, height: 44),
+        minSize: ClockPanelWindowSize.size,
         resizable: true,
-        sizesToContent: true
+        sizesToContent: false
     )
 }
