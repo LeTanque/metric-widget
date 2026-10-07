@@ -4,6 +4,8 @@ struct PanelChrome<Content: View>: View {
     let title: String
     let symbol: String
     var compact: Bool = false
+    /// When true, panel width follows content instead of stretching with the window.
+    var wrapContentWidth: Bool = false
     @ViewBuilder var content: Content
     @Environment(ThemeStore.self) private var themes
 
@@ -22,8 +24,8 @@ struct PanelChrome<Content: View>: View {
             content
         }
         .padding(compact ? 0 : 14)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .fixedSize(horizontal: false, vertical: !compact)
+        .frame(maxWidth: wrapContentWidth ? nil : .infinity, alignment: .topLeading)
+        .fixedSize(horizontal: wrapContentWidth, vertical: !compact)
         .foregroundStyle(p.primary)
         .background(.clear)
     }

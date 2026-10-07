@@ -202,6 +202,7 @@ final class PanelController {
                         layout: .clock,
                         themeStore: themeStore,
                         cornerRadius: 10,
+                        clockGlass: true,
                         rootView: ClockPanelView(zone: zone)
                     )
                 }

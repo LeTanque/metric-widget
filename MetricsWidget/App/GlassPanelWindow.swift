@@ -5,6 +5,7 @@ private struct ThemedRoot<Content: View>: View {
     var themes: ThemeStore
     var sizeBridge: PanelSizeBridge
     var measureContent: Bool
+    var measureMode: PanelContentMeasureMode
     var content: Content
 
     var body: some View {
@@ -20,7 +21,7 @@ private struct ThemedRoot<Content: View>: View {
                     .environment(sizeBridge)
             }
         }
-        .reportPanelContentSize(when: measureContent, bridge: sizeBridge)
+        .reportPanelContentSize(when: measureContent, bridge: sizeBridge, mode: measureMode)
     }
 }
 
@@ -32,17 +33,20 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private let sizeBridge = PanelSizeBridge()
     private var suppressResizeTracking = false
     private var userSized = false
+    private var usesClockGlassTint = false
 
     init<Content: View>(
         id: String,
         layout: PanelLayout,
         themeStore: ThemeStore,
         cornerRadius: CGFloat = 20,
+        clockGlass: Bool = false,
         rootView: Content
     ) {
         self.panelID = id
         self.themeStore = themeStore
         self.layout = layout
+        self.usesClockGlassTint = clockGlass
 
         var mask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel]
         if layout.resizable {
@@ -84,6 +88,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
                 themes: themeStore,
                 sizeBridge: sizeBridge,
                 measureContent: layout.sizesToContent,
+                measureMode: layout.contentMeasureMode,
                 content: rootView
             )
         )
@@ -101,7 +106,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             contentView = glass
         } else {
             let effect = NSVisualEffectView(frame: NSRect(origin: .zero, size: layout.defaultSize))
-            effect.material = .hudWindow
+            effect.material = themeStore.palette.glassMaterial
             effect.blendingMode = .behindWindow
             effect.state = .active
             effect.wantsLayer = true
@@ -136,8 +141,13 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     }
 
     func applyThemeChrome() {
+        let palette = themeStore.palette
+        let tint = usesClockGlassTint ? palette.clockGlassTint : palette.glassTint
         if #available(macOS 26.0, *) {
-            (contentView as? NSGlassEffectView)?.tintColor = themeStore.palette.glassTint
+            (contentView as? NSGlassEffectView)?.tintColor = tint
+        }
+        if let effect = contentView as? NSVisualEffectView {
+            effect.material = usesClockGlassTint ? .hudWindow : palette.glassMaterial
         }
     }
 
@@ -270,8 +280,8 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private static func maxPanelSize(for layout: PanelLayout, screen: NSScreen? = nil) -> NSSize {
         let visible = (screen ?? NSScreen.main)?.visibleFrame.size ?? NSSize(width: 1280, height: 800)
         return NSSize(
-            width: max(layout.minSize.width, visible.width),
-            height: max(layout.minSize.height, visible.height)
+            width: max(layout.minSize.width, min(visible.width, layout.maxSize.width)),
+            height: max(layout.minSize.height, min(visible.height, layout.maxSize.height))
         )
     }
 

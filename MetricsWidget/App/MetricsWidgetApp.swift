@@ -3,10 +3,12 @@ import SwiftUI
 
 @main
 struct MetricsWidgetApp: App {
+    @NSApplicationDelegateAdaptor(MetricsAppDelegate.self) private var appDelegate
     @State private var panels = PanelController()
 
     var body: some Scene {
-        MenuBarExtra("Metrics", systemImage: "gauge.with.dots.needle.67percent") {
+        let _ = { appDelegate.panelController = panels }()
+        return MenuBarExtra("Metrics", systemImage: "gauge.with.dots.needle.67percent") {
             Toggle("Network", isOn: $panels.showNetwork)
             Toggle("App Memory", isOn: $panels.showMemory)
             Toggle("CPU, RAM & Storage", isOn: $panels.showSystem)

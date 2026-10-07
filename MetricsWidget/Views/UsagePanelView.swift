@@ -7,7 +7,7 @@ struct UsagePanelView: View {
 
     var body: some View {
         let p = themes.palette
-        PanelChrome(title: "Usage", symbol: "circle.bottomhalf.filled", compact: embedded) {
+        PanelChrome(title: "Usage", symbol: "circle.bottomhalf.filled", compact: embedded, wrapContentWidth: !embedded) {
             VStack(alignment: .leading, spacing: 12) {
                 if store.snapshot.providers.isEmpty {
                     Text("Turn on Cursor, Grok Bot, OpenAI, or Anthropic in Settings.")

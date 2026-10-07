@@ -14,24 +14,41 @@ final class PanelSizeBridge {
 
 private struct ReportPanelSize: ViewModifier {
     var bridge: PanelSizeBridge
+    var mode: PanelContentMeasureMode
 
     func body(content: Content) -> some View {
-        content.background {
-            GeometryReader { geo in
-                Color.clear
-                    .onChange(of: geo.size, initial: true) { _, newValue in
-                        bridge.report(newValue)
-                    }
+        measuredContent(content)
+            .background {
+                GeometryReader { geo in
+                    Color.clear
+                        .onChange(of: geo.size, initial: true) { _, newValue in
+                            guard newValue.width > 1, newValue.height > 1 else { return }
+                            bridge.report(newValue)
+                        }
+                }
             }
+    }
+
+    @ViewBuilder
+    private func measuredContent(_ content: Content) -> some View {
+        switch mode {
+        case .wrapBoth:
+            content.fixedSize(horizontal: true, vertical: true)
+        case .wrapWidthGrowHeight:
+            content.fixedSize(horizontal: true, vertical: false)
         }
     }
 }
 
 extension View {
     @ViewBuilder
-    func reportPanelContentSize(when enabled: Bool, bridge: PanelSizeBridge) -> some View {
+    func reportPanelContentSize(
+        when enabled: Bool,
+        bridge: PanelSizeBridge,
+        mode: PanelContentMeasureMode = .wrapBoth
+    ) -> some View {
         if enabled {
-            modifier(ReportPanelSize(bridge: bridge))
+            modifier(ReportPanelSize(bridge: bridge, mode: mode))
         } else {
             self
         }

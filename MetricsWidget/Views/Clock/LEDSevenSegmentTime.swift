@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Classic 7-segment LED time (HH:mm), drawn in SwiftUI — no bundled font required.
+/// Classic 7-segment LED time (4 digits + colon), drawn in SwiftUI — no bundled font required.
 struct LEDSevenSegmentTime: View {
     var date: Date
     var timeZone: TimeZone = .current
@@ -9,19 +9,20 @@ struct LEDSevenSegmentTime: View {
     var digitHeight: CGFloat
     var segmentThickness: CGFloat = 1
 
-    private var timeText: String {
-        let formatter = DateFormatter()
-        formatter.timeZone = timeZone
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "h:mm"
-        return formatter.string(from: date)
-    }
-
     private var colonLit: Bool {
         guard blinkColon else { return true }
         var calendar = Calendar.current
         calendar.timeZone = timeZone
         return calendar.component(.second, from: date) % 2 == 0
+    }
+
+    private var hourMinuteDigits: (hourTens: Int, hourOnes: Int, minuteTens: Int, minuteOnes: Int) {
+        var calendar = Calendar.current
+        calendar.timeZone = timeZone
+        let hour24 = calendar.component(.hour, from: date)
+        let hour12 = hour24 % 12 == 0 ? 12 : hour24 % 12
+        let minute = calendar.component(.minute, from: date)
+        return (hour12 / 10, hour12 % 10, minute / 10, minute % 10)
     }
 
     private var digitSize: CGSize {
@@ -33,19 +34,39 @@ struct LEDSevenSegmentTime: View {
     }
 
     var body: some View {
+        let parts = hourMinuteDigits
         HStack(spacing: 0) {
-            ForEach(Array(timeText.enumerated()), id: \.offset) { _, char in
-                if char == ":" {
-                    LEDColon(color: ledColor, lit: colonLit, size: colonSize)
-                } else if let digit = char.wholeNumberValue {
-                    LEDDigit(digit: digit, color: ledColor, size: digitSize, thicknessScale: segmentThickness)
-                }
-            }
+            LEDDigit(
+                digit: parts.hourTens,
+                color: ledColor,
+                blank: parts.hourTens == 0,
+                size: digitSize,
+                thicknessScale: segmentThickness
+            )
+            LEDDigit(
+                digit: parts.hourOnes,
+                color: ledColor,
+                size: digitSize,
+                thicknessScale: segmentThickness
+            )
+            LEDColon(color: ledColor, lit: colonLit, size: colonSize)
+            LEDDigit(
+                digit: parts.minuteTens,
+                color: ledColor,
+                size: digitSize,
+                thicknessScale: segmentThickness
+            )
+            LEDDigit(
+                digit: parts.minuteOnes,
+                color: ledColor,
+                size: digitSize,
+                thicknessScale: segmentThickness
+            )
         }
         .frame(
             width: LEDGlyphMetrics.timeWidth(height: digitHeight),
             height: digitHeight,
-            alignment: .trailing
+            alignment: .center
         )
     }
 }
@@ -77,9 +98,10 @@ private struct LEDColon: View {
 
     var body: some View {
         GeometryReader { geo in
-            let dot = min(geo.size.width, geo.size.height) * 0.14
+            let base = min(geo.size.width, geo.size.height)
+            let dot = max(base * 0.22, 4)
             let fill = lit ? color : color.opacity(0.07)
-            VStack(spacing: geo.size.height * 0.22) {
+            VStack(spacing: geo.size.height * 0.18) {
                 Circle().fill(fill).frame(width: dot, height: dot)
                 Circle().fill(fill).frame(width: dot, height: dot)
             }
@@ -92,11 +114,13 @@ private struct LEDColon: View {
 private struct LEDDigit: View {
     var digit: Int
     var color: Color
+    var blank: Bool = false
     var size: CGSize
     var thicknessScale: CGFloat = 1
 
     private var segments: UInt8 {
-        Self.segmentMasks[digit]
+        guard !blank, digit >= 0, digit <= 9 else { return 0 }
+        return Self.segmentMasks[digit]
     }
 
     var body: some View {

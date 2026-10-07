@@ -35,6 +35,9 @@ struct ThemePalette {
     var segmentGlow: Bool
     var clockLED: Color
     var glassTint: NSColor?
+    /// Extra-dark smoked glass for clock panels (black at lower opacity).
+    var clockGlassTint: NSColor
+    var glassMaterial: NSVisualEffectView.Material
 
     static let system = ThemePalette(
         titleFont: .caption.weight(.semibold),
@@ -55,7 +58,9 @@ struct ThemePalette {
         segmentOff: Color.secondary.opacity(0.22),
         segmentGlow: false,
         clockLED: Color(red: 1.0, green: 0.45, blue: 0.05),
-        glassTint: nil
+        glassTint: NSColor(calibratedWhite: 0, alpha: 0.62),
+        clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.28),
+        glassMaterial: .underWindowBackground
     )
 
     static let matrix = ThemePalette(
@@ -77,7 +82,9 @@ struct ThemePalette {
         segmentOff: Color(red: 0.02, green: 0.06, blue: 0.05),
         segmentGlow: true,
         clockLED: Color(red: 0.35, green: 1.0, blue: 0.28),
-        glassTint: NSColor(calibratedRed: 0.05, green: 0.55, blue: 0.12, alpha: 0.55)
+        glassTint: NSColor(calibratedWhite: 0, alpha: 0.82),
+        clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.32),
+        glassMaterial: .underWindowBackground
     )
 }
 
