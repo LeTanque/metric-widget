@@ -230,7 +230,11 @@ final class PanelController {
             self?.refreshClockPanels()
         }
         if let settingsWindow {
-            settingsWindow.contentViewController = NSHostingController(rootView: root)
+            if let hosting = settingsWindow.contentViewController as? NSHostingController<SettingsView> {
+                hosting.rootView = root
+            } else {
+                settingsWindow.contentViewController = NSHostingController(rootView: root)
+            }
         } else {
             let window = NSWindow(contentViewController: NSHostingController(rootView: root))
             window.title = "Metrics Settings"

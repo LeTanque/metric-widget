@@ -9,21 +9,39 @@ struct SettingsView: View {
     var onClockPreferencesChanged: () -> Void
 
     @State private var saveStatus: UsageSaveResult?
+    @State private var selectedSection: SettingsSection = .appMemory
 
     var body: some View {
-        TabView {
-            appMemoryTab
-                .tabItem { Text("App Memory") }
-            clockTab
-                .tabItem { Text("Clock") }
-            enableOnlyTab(isOn: $panels.showNetwork)
-                .tabItem { Text("Network") }
-            enableOnlyTab(isOn: $panels.showSystem)
-                .tabItem { Text("Computer") }
-            usageTab
-                .tabItem { Text("Usage") }
+        VStack(spacing: 0) {
+            Picker("Settings", selection: $selectedSection) {
+                ForEach(SettingsSection.allCases) { section in
+                    Text(section.rawValue).tag(section)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .padding([.horizontal, .top])
+
+            sectionContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 520, height: 640)
+    }
+
+    @ViewBuilder
+    private var sectionContent: some View {
+        switch selectedSection {
+        case .appMemory:
+            appMemoryTab
+        case .clock:
+            clockTab
+        case .network:
+            enableOnlyTab(isOn: $panels.showNetwork)
+        case .computer:
+            enableOnlyTab(isOn: $panels.showSystem)
+        case .usage:
+            usageTab
+        }
     }
 
     private var appMemoryTab: some View {
@@ -148,4 +166,14 @@ struct SettingsView: View {
             }
         )
     }
+}
+
+private enum SettingsSection: String, CaseIterable, Identifiable {
+    case appMemory = "App Memory"
+    case clock = "Clock"
+    case network = "Network"
+    case computer = "Computer"
+    case usage = "Usage"
+
+    var id: String { rawValue }
 }
