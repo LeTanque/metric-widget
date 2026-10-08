@@ -58,6 +58,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         self.layout = layout
         self.windowShape = shape
         self.usesClockGlassTint = clockGlass
+        IdentityMigration.runIfNeeded()
 
         var mask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel]
         if layout.resizable {

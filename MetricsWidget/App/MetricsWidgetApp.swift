@@ -4,7 +4,10 @@ import SwiftUI
 @main
 struct MetricsWidgetApp: App {
     @NSApplicationDelegateAdaptor(MetricsAppDelegate.self) private var appDelegate
-    @State private var panels = PanelController()
+    @State private var panels: PanelController = {
+        IdentityMigration.runIfNeeded()
+        return PanelController()
+    }()
 
     var body: some Scene {
         let _ = { appDelegate.panelController = panels }()

@@ -2,9 +2,13 @@ import Foundation
 import Security
 
 enum KeychainStore {
-    static let service = "com.frankmartinez.MetricsWidget"
+    static let service = AppIdentity.bundleID
 
     static func password(account: String) -> String? {
+        password(account: account, service: service)
+    }
+
+    static func password(account: String, service: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -19,11 +23,20 @@ enum KeychainStore {
     }
 
     static func hasPassword(account: String) -> Bool {
-        password(account: account) != nil
+        hasPassword(account: account, service: service)
+    }
+
+    static func hasPassword(account: String, service: String) -> Bool {
+        password(account: account, service: service) != nil
     }
 
     @discardableResult
     static func setPassword(_ value: String?, account: String) -> Bool {
+        setPassword(value, account: account, service: service)
+    }
+
+    @discardableResult
+    static func setPassword(_ value: String?, account: String, service: String) -> Bool {
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
