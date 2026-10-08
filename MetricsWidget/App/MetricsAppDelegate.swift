@@ -14,9 +14,7 @@ final class MetricsAppDelegate: NSObject, NSApplicationDelegate {
         let mainMenu = NSMenu()
 
         let appItem = NSMenuItem()
-        let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "Quit Metrics", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        appItem.submenu = appMenu
+        appItem.submenu = NSMenu()
         mainMenu.addItem(appItem)
 
         let editItem = NSMenuItem()
