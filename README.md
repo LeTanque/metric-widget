@@ -36,9 +36,9 @@ Menu bar → **Usage** and **Settings…**. Enable Cursor, Grok Bot, and/or Open
   - `GetCurrentPeriodUsage` — **dollar** included spend / remaining (bar = remaining included $; “beyond included” for overage).
   - `GET cursor.com/api/usage-summary` — **Cursor Models** and **Other Models** percent-used bars (dashboard semantics). Cookie auth via `WorkosCursorSessionToken` derived from the IDE token. Falls back to `autoPercentUsed` / `apiPercentUsed` on `GetCurrentPeriodUsage` if the summary call fails.
 - **Grok Bot** uses the same Cursor session token and calls the unofficial `GetSandUsageStatus` endpoint. It tracks the **weekly** Grok Bot included pool (`usagePercent` is used share; the bar shows remaining). That meter is separate from Cursor’s monthly plan bar; after weekly Grok runs out, usage may spill to shared Cursor on-demand (not shown on this tile). Accounts with no Sand allowance show a placeholder instead of a bar.
-- **OpenAI / Anthropic** keys are generic Keychain passwords (`service` `com.metricswidget.app`, accounts `openai.admin` and `anthropic.admin`). OpenAI needs an **Admin** key with `api.usage.read`. Anthropic needs `sk-ant-admin…`. A one-shot launch migrates keys and settings from the old `com.frankmartinez.MetricsWidget` service/domain.
+- **OpenAI / Anthropic** — paste an Admin key in **Settings** (OpenAI needs `api.usage.read`; Anthropic needs `sk-ant-admin…`). Save applies it and refreshes Usage. Clear removes it. Existing keys keep working.
 
-Equivalent CLI:
+Optional CLI if you already store keys that way:
 
 ```bash
 security add-generic-password -s com.metricswidget.app -a openai.admin -w
