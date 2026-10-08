@@ -8,15 +8,25 @@ Menu-bar app (no Dock icon). Toggle each panel, drag them on the desktop, option
 
 **Panel sizing** — drag any panel edge/corner to resize (click the panel first so it becomes key). **Usage** also grows/shrinks with provider content when you have not manually resized it.
 
-## Run
+## Install
 
-Release build (DoD / daily use on Tank):
+Download the latest zip from [Releases](https://github.com/LeTanque/metric-widget/releases/latest), unzip it, and move `MetricsWidget.app` to `/Applications`.
+
+The first open is blocked because the app is not notarized. Right-click the app and choose **Open**, allow it in System Settings → Privacy & Security, or run:
 
 ```bash
-./build.sh
-ditto build/MetricsWidget.app /Applications/MetricsWidget.app
-open /Applications/MetricsWidget.app
+xattr -dr com.apple.quarantine /Applications/MetricsWidget.app
 ```
+
+Build from source on macOS 15 with Command Line Tools:
+
+```bash
+./scripts/package_app.sh
+```
+
+Then copy `build/MetricsWidget.app` to `/Applications`.
+
+## Run
 
 Debug iteration:
 
@@ -24,9 +34,7 @@ Debug iteration:
 swift build -c debug --product MetricsWidget
 ```
 
-Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcode project). Requires macOS 15+.
-
-Feature completion checklist: Terra 1 skill **`metrics-widget-feature-dod`** (`~/git/terra-1/skills/metrics-widget-feature-dod/SKILL.md`) — same UPER + compiled-app smoke pattern as Akashic.
+Requires macOS 15+.
 
 ## Usage tile
 
