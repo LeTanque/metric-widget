@@ -5,26 +5,26 @@ struct UsagePanelView: View {
     var embedded: Bool = false
 
     var body: some View {
-        ArcadePanelSurface(embedded: embedded) {
+        ArcadePanelSurface(embedded: embedded, fillAvailableHeight: false) {
             VStack(alignment: .leading, spacing: 12) {
                 if store.snapshot.providers.isEmpty {
                     Text("TURN ON CURSOR, GROK BOT, OPENAI, OR ANTHROPIC IN SETTINGS.")
                         .font(ArcadeFont.font(size: 6))
                         .foregroundStyle(ArcadeTileChrome.label)
-                        .lineLimit(3)
-                        .truncationMode(.tail)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(store.snapshot.providers) { provider in
-                        ProviderUsageBlock(provider: provider)
+                        ProviderUsageBlock(
+                            provider: provider,
+                            inset: ArcadePanelSurface.inset(embedded: embedded)
+                        )
                     }
                 }
                 if let updated = store.snapshot.lastUpdated {
                     Text("UPDATED \(updated.formatted(date: .omitted, time: .shortened))")
                         .font(ArcadeFont.font(size: 5))
                         .foregroundStyle(ArcadeTileChrome.label)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -34,37 +34,30 @@ struct UsagePanelView: View {
 
 private struct ProviderUsageBlock: View {
     let provider: ProviderUsage
+    var inset: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(provider.title.uppercased())
-                    .font(ArcadeFont.font(size: 7))
-                    .foregroundStyle(ArcadeTileChrome.value)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Spacer(minLength: 6)
-                if !provider.resetLabel.isEmpty {
+            SectionHeaderBand(inset: inset) {
+                ArcadeFittingPair(showsValue: !provider.resetLabel.isEmpty) {
+                    Text(provider.title.uppercased())
+                        .font(ArcadeFont.font(size: 7))
+                        .foregroundStyle(ArcadeTileChrome.value)
+                } value: {
                     Text(provider.resetLabel.uppercased())
                         .font(ArcadeFont.font(size: 5))
                         .foregroundStyle(ArcadeTileChrome.label)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .layoutPriority(-1)
                 }
             }
             Text(provider.subtitle.uppercased())
                 .font(ArcadeFont.font(size: 5))
                 .foregroundStyle(ArcadeTileChrome.label)
-                .lineLimit(1)
-                .truncationMode(.tail)
+                .fixedSize(horizontal: false, vertical: true)
 
             if let error = provider.error {
                 Text(error)
                     .font(ArcadeFont.font(size: 6))
                     .foregroundStyle(ArcadeTileChrome.warning)
-                    .lineLimit(3)
-                    .truncationMode(.tail)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 if let percent = provider.percent {
@@ -73,14 +66,14 @@ private struct ProviderUsageBlock: View {
                         percent: percent,
                         detail: provider.detail,
                         remaining: true,
-                        compact: true
+                        compact: true,
+                        wrapWhenTight: true
                     )
                 } else {
                     Text(provider.detail)
                         .font(ArcadeFont.font(size: 7))
                         .foregroundStyle(ArcadeTileChrome.value)
-                        .lineLimit(2)
-                        .truncationMode(.tail)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if !provider.quotaLines.isEmpty {
@@ -90,7 +83,8 @@ private struct ProviderUsageBlock: View {
                                 title: line.label,
                                 percent: line.percentUsed,
                                 detail: "",
-                                compact: true
+                                compact: true,
+                                wrapWhenTight: true
                             )
                         }
                     }
@@ -101,8 +95,6 @@ private struct ProviderUsageBlock: View {
                     Text(footnote)
                         .font(ArcadeFont.font(size: 5))
                         .foregroundStyle(ArcadeTileChrome.label)
-                        .lineLimit(2)
-                        .truncationMode(.tail)
                         .padding(.top, 2)
                         .fixedSize(horizontal: false, vertical: true)
                 }

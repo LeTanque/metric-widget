@@ -37,6 +37,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private let layout: PanelLayout
     private let sizeBridge = PanelSizeBridge()
     private var suppressResizeTracking = false
+    private var isAdoptingMeasuredSize = false
     private var userSized = false
     private var usesClockGlassTint = false
     private let windowShape: PanelWindowShape
@@ -103,7 +104,11 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             )
         )
         if #available(macOS 13.0, *) {
-            hosting.sizingOptions = [.preferredContentSize]
+            if layout.contentMeasureMode == .fillWidthGrowHeight {
+                hosting.sizingOptions = []
+            } else {
+                hosting.sizingOptions = [.preferredContentSize]
+            }
         }
         hosting.frame = NSRect(origin: .zero, size: layout.defaultSize)
         hosting.autoresizingMask = [.width, .height]
@@ -153,6 +158,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         persistFrame()
         applyWindowShape()
         guard layout.sizesToContent, !suppressResizeTracking else { return }
+        guard layout.contentMeasureMode != .fillWidthGrowHeight else { return }
         userSized = true
         UserDefaults.standard.set(true, forKey: Self.userSizedKey(panelID))
         persistSize()
@@ -220,6 +226,12 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         guard layout.sizesToContent else { return }
         guard swiftUISize.width.isFinite, swiftUISize.height.isFinite else { return }
         guard swiftUISize.width > 0, swiftUISize.height > 0 else { return }
+        guard !isAdoptingMeasuredSize else { return }
+
+        if layout.contentMeasureMode == .fillWidthGrowHeight {
+            adoptFillWidthMeasuredHeight(swiftUISize.height)
+            return
+        }
 
         let pad: CGFloat = 12
         let limit = Self.maxPanelSize(for: layout, screen: screen)
@@ -249,6 +261,28 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         suppressResizeTracking = false
     }
 
+    private func adoptFillWidthMeasuredHeight(_ measuredHeight: CGFloat) {
+        let limit = Self.maxPanelSize(for: layout, screen: screen)
+        let current = contentRect(forFrameRect: frame).size
+        let targetW = Self.clamp(layout.defaultSize.width, min: layout.minSize.width, max: limit.width)
+        let targetH = Self.clamp(measuredHeight, min: layout.minSize.height, max: limit.height)
+
+        guard abs(targetW - current.width) > 0.5 || abs(targetH - current.height) > 0.5 else { return }
+
+        isAdoptingMeasuredSize = true
+        suppressResizeTracking = true
+        let oldFrame = frame
+        setContentSize(NSSize(width: targetW, height: targetH))
+        let deltaH = frame.height - oldFrame.height
+        if abs(deltaH) > 0.5 {
+            setFrameOrigin(NSPoint(x: oldFrame.origin.x, y: oldFrame.origin.y - deltaH))
+        }
+        applyWindowShape()
+        persistFrame()
+        suppressResizeTracking = false
+        isAdoptingMeasuredSize = false
+    }
+
     private func restoredSize(fallback: NSSize) -> NSSize {
         let defaults = UserDefaults.standard
         let generationKey = Self.generationKey(panelID)
@@ -268,6 +302,15 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         let hKey = Self.heightKey(panelID)
         if panelID == "network" {
             let migrateKey = Self.networkWidth320Key
+            if defaults.object(forKey: migrateKey) == nil {
+                defaults.set(true, forKey: migrateKey)
+                if defaults.object(forKey: wKey) != nil {
+                    defaults.set(layout.defaultSize.width, forKey: wKey)
+                }
+            }
+        }
+        if panelID == "usage" {
+            let migrateKey = Self.usageWidth320Key
             if defaults.object(forKey: migrateKey) == nil {
                 defaults.set(true, forKey: migrateKey)
                 if defaults.object(forKey: wKey) != nil {
@@ -416,4 +459,5 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private static func userSizedKey(_ id: String) -> String { "panel.\(id).userSized" }
     private static func generationKey(_ id: String) -> String { "panel.\(id).frameGeneration" }
     private static let networkWidth320Key = "panel.network.widthMigrated320"
+    private static let usageWidth320Key = "panel.usage.widthMigrated320"
 }
