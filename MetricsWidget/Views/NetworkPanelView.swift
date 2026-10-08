@@ -16,11 +16,13 @@ struct NetworkPanelView: View {
                     peakBytesPerSec: snap.peakDownloadBytesPerSec,
                     indicator: ArcadeTileChrome.download
                 )
+                Spacer(minLength: 8)
                 RateLabel(
                     title: "UP",
                     bytesPerSec: snap.uploadBytesPerSec,
                     peakBytesPerSec: snap.peakUploadBytesPerSec,
-                    indicator: ArcadeTileChrome.upload
+                    indicator: ArcadeTileChrome.upload,
+                    alignment: .trailing
                 )
             }
             .padding(.horizontal, pad)
@@ -59,9 +61,10 @@ private struct RateLabel: View {
     let bytesPerSec: Double
     let peakBytesPerSec: Double
     let indicator: Color
+    var alignment: HorizontalAlignment = .leading
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: alignment, spacing: 2) {
             HStack(spacing: 4) {
                 Text(title == "UP" ? "▲" : "▼")
                     .font(ArcadeFont.font(size: 8))
@@ -76,7 +79,6 @@ private struct RateLabel: View {
                 .foregroundStyle(ArcadeTileChrome.label)
             LEDRateValue(bytesPerSec: peakBytesPerSec, numberSize: 10, unitSize: 7)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
