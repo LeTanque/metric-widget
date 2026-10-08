@@ -3,16 +3,14 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path(
-    "/Users/frank.martinez/.cursor/projects/Users-frank-martinez-git-MetricsWidget/assets/"
-    "istockphoto-1144415426-612x612-fe332761-e0cc-44f5-8088-cf58131deb66.jpg"
-)
+DEFAULT_SOURCE = ROOT / "assets" / "gauge-source.jpg"
 ICONSET = ROOT / "MetricsWidget/Assets.xcassets/AppIcon.appiconset"
 
 # Matches Theme.swift matrix palette (sRGB 0–255)
@@ -136,11 +134,27 @@ def compose_icon(size: int, gauge_alpha: Image.Image) -> Image.Image:
     return bg.convert("RGBA")
 
 
-def main() -> None:
-    if not SOURCE.is_file():
-        raise SystemExit(f"Source image not found: {SOURCE}")
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generate the MetricsWidget app icon.")
+    parser.add_argument(
+        "source",
+        nargs="?",
+        type=Path,
+        default=DEFAULT_SOURCE,
+        help="Source gauge image (default: assets/gauge-source.jpg)",
+    )
+    return parser.parse_args()
 
-    source = Image.open(SOURCE)
+
+def main() -> None:
+    args = parse_args()
+    source_path = args.source.expanduser()
+    if not source_path.is_absolute():
+        source_path = ROOT / source_path
+    if not source_path.is_file():
+        raise SystemExit(f"Source image not found: {source_path}")
+
+    source = Image.open(source_path)
     gauge_alpha = extract_gauge_alpha(source)
 
     master_size = 1024

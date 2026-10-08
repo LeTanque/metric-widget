@@ -76,6 +76,7 @@ final class PanelController {
     private var started = false
 
     init() {
+        IdentityMigration.runIfNeeded()
         let defaults = UserDefaults.standard
         showNetwork = defaults.object(forKey: Keys.network) as? Bool ?? true
         showMemory = defaults.object(forKey: Keys.memory) as? Bool ?? true

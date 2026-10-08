@@ -112,6 +112,7 @@ final class ThemeStore {
     }
 
     init() {
+        IdentityMigration.runIfNeeded()
         let raw = UserDefaults.standard.string(forKey: "app.theme") ?? ""
         id = ThemeID(rawValue: raw) ?? .system
     }

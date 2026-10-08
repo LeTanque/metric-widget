@@ -10,10 +10,16 @@ enum UsageSampler {
             providers.append(GrokBotUsageClient.fetch())
         }
         if preferences.openaiEnabled {
-            providers.append(OpenAIUsageClient.fetch(apiKey: preferences.openaiKey))
+            let openAIKey = preferences.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !openAIKey.isEmpty {
+                providers.append(OpenAIUsageClient.fetch(apiKey: openAIKey))
+            }
         }
         if preferences.anthropicEnabled {
-            providers.append(AnthropicUsageClient.fetch(apiKey: preferences.anthropicKey))
+            let anthropicKey = preferences.anthropicKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !anthropicKey.isEmpty {
+                providers.append(AnthropicUsageClient.fetch(apiKey: anthropicKey))
+            }
         }
         return UsageSnapshot(providers: providers, lastUpdated: Date())
     }

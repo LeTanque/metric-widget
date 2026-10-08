@@ -58,6 +58,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         self.layout = layout
         self.windowShape = shape
         self.usesClockGlassTint = clockGlass
+        IdentityMigration.runIfNeeded()
 
         var mask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel]
         if layout.resizable {
@@ -133,10 +134,51 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         effect.addSubview(hosting)
         tintOverlay = overlay
         contentView = effect
+        let resetMenu = makeResetSizeMenu()
+        effect.menu = resetMenu
+        hosting.menu = resetMenu
 
         restoreFrame(defaultSize: restoredSize(fallback: layout.defaultSize))
         applyThemeChrome()
         delegate = self
+    }
+
+    private func makeResetSizeMenu() -> NSMenu {
+        let menu = NSMenu()
+        let item = NSMenuItem(title: "Reset Size", action: #selector(resetPanelSize(_:)), keyEquivalent: "")
+        item.target = self
+        menu.addItem(item)
+        return menu
+    }
+
+    @objc private func resetPanelSize(_ sender: Any?) {
+        let visible = visibleScreenFrame()
+        let limit = Self.maxPanelSize(for: layout, screen: screen)
+        if layout.contentMeasureMode == .fillWidthGrowHeight {
+            userSized = false
+            UserDefaults.standard.set(false, forKey: Self.userSizedKey(panelID))
+        } else if layout.sizesToContent {
+            userSized = true
+            UserDefaults.standard.set(true, forKey: Self.userSizedKey(panelID))
+        }
+        let target = Self.clampSize(
+            layout.defaultSize,
+            minSize: layout.minSize,
+            maxSize: limit
+        )
+        let oldFrame = frame
+        suppressResizeTracking = true
+        isAdoptingMeasuredSize = true
+        setContentSize(target)
+        let deltaH = frame.height - oldFrame.height
+        if abs(deltaH) > 0.5 {
+            setFrameOrigin(NSPoint(x: oldFrame.origin.x, y: oldFrame.origin.y - deltaH))
+        }
+        clampOriginToVisibleFrame(visible)
+        applyWindowShape()
+        persistFrame()
+        suppressResizeTracking = false
+        isAdoptingMeasuredSize = false
     }
 
     override var canBecomeKey: Bool { true }

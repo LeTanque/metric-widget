@@ -17,6 +17,7 @@ final class UsagePreferences {
     var anthropicKey: String
 
     init() {
+        IdentityMigration.runIfNeeded()
         let defaults = UserDefaults.standard
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
         grokBotEnabled = defaults.object(forKey: Keys.grokBot) as? Bool ?? true

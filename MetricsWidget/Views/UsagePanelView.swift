@@ -8,7 +8,7 @@ struct UsagePanelView: View {
         ArcadePanelSurface(embedded: embedded, fillAvailableHeight: false) {
             VStack(alignment: .leading, spacing: 12) {
                 if store.snapshot.providers.isEmpty {
-                    Text("TURN ON CURSOR, GROK BOT, OPENAI, OR ANTHROPIC IN SETTINGS.")
+                    Text("NO PROVIDERS CONFIGURED.")
                         .font(ArcadeFont.font(size: 6))
                         .foregroundStyle(ArcadeTileChrome.label)
                         .fixedSize(horizontal: false, vertical: true)
