@@ -41,13 +41,6 @@ final class PanelController {
         }
     }
 
-    var showCombined: Bool {
-        didSet {
-            UserDefaults.standard.set(showCombined, forKey: Keys.combined)
-            applyVisibility()
-        }
-    }
-
     var showUsage: Bool {
         didSet {
             UserDefaults.standard.set(showUsage, forKey: Keys.usage)
@@ -69,7 +62,6 @@ final class PanelController {
     private var networkPanel: GlassPanelWindow?
     private var memoryPanel: GlassPanelWindow?
     private var systemPanel: GlassPanelWindow?
-    private var combinedPanel: GlassPanelWindow?
     private var usagePanel: GlassPanelWindow?
     private var clockPanels: [String: GlassPanelWindow] = [:]
     private var settingsWindow: NSWindow?
@@ -81,7 +73,6 @@ final class PanelController {
         showNetwork = defaults.object(forKey: Keys.network) as? Bool ?? true
         showMemory = defaults.object(forKey: Keys.memory) as? Bool ?? true
         showSystem = defaults.object(forKey: Keys.system) as? Bool ?? true
-        showCombined = defaults.object(forKey: Keys.combined) as? Bool ?? false
         showUsage = defaults.object(forKey: Keys.usage) as? Bool ?? true
         showClock = defaults.object(forKey: Keys.clock) as? Bool ?? false
         clockPreferences.reload()
@@ -148,21 +139,6 @@ final class PanelController {
             systemPanel?.orderOut(nil)
         }
 
-        if showCombined {
-            if combinedPanel == nil {
-                combinedPanel = GlassPanelWindow(
-                    id: "combined",
-                    layout: .combined,
-                    themeStore: themeStore,
-                    shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
-                    rootView: CombinedPanelView(store: store, usageStore: usageStore)
-                )
-            }
-            combinedPanel?.orderFrontRegardless()
-        } else {
-            combinedPanel?.orderOut(nil)
-        }
-
         if showUsage {
             if usagePanel == nil {
                 usagePanel = GlassPanelWindow(
@@ -180,8 +156,8 @@ final class PanelController {
 
         applyClockVisibility()
 
-        store.isActive = showNetwork || showMemory || showSystem || showCombined
-        usageStore.isActive = showUsage || showCombined
+        store.isActive = showNetwork || showMemory || showSystem
+        usageStore.isActive = showUsage
         applyThemeToWindows()
     }
 
@@ -189,7 +165,6 @@ final class PanelController {
         networkPanel?.applyThemeChrome()
         memoryPanel?.applyThemeChrome()
         systemPanel?.applyThemeChrome()
-        combinedPanel?.applyThemeChrome()
         usagePanel?.applyThemeChrome()
         for panel in clockPanels.values {
             panel.applyThemeChrome()
@@ -233,10 +208,9 @@ final class PanelController {
         usagePreferences.reload()
         clockPreferences.reload()
         let root = SettingsView(
+            panels: self,
             preferences: usagePreferences,
-            clockPreferences: clockPreferences,
-            usagePanelVisible: showUsage || showCombined,
-            clockPanelsVisible: showClock
+            clockPreferences: clockPreferences
         ) { [weak self] in
             self?.usageStore.refreshNow()
         } onClockPreferencesChanged: { [weak self] in
@@ -248,7 +222,7 @@ final class PanelController {
             let window = NSWindow(contentViewController: NSHostingController(rootView: root))
             window.title = "Metrics Settings"
             window.styleMask = [.titled, .closable, .miniaturizable]
-            window.setContentSize(NSSize(width: 520, height: 520))
+            window.setContentSize(NSSize(width: 520, height: 640))
             window.center()
             window.isReleasedWhenClosed = false
             settingsWindow = window
@@ -275,7 +249,6 @@ final class PanelController {
         static let network = "panel.network.visible"
         static let memory = "panel.memory.visible"
         static let system = "panel.system.visible"
-        static let combined = "panel.combined.visible"
         static let usage = "panel.usage.visible"
         static let clock = "panel.clock.visible"
     }

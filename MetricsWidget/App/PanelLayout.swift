@@ -42,14 +42,6 @@ struct PanelLayout {
         sizesToContent: false,
         frameGeneration: 3
     )
-    static let combined = PanelLayout(
-        defaultSize: NSSize(width: 700, height: 520),
-        minSize: NSSize(width: 520, height: 380),
-        maxSize: NSSize(width: 960, height: 760),
-        resizable: true,
-        sizesToContent: false,
-        frameGeneration: 2
-    )
     static let usage = PanelLayout(
         defaultSize: NSSize(width: 320, height: 340),
         minSize: NSSize(width: 320, height: 80),
