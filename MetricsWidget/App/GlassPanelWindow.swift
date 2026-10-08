@@ -15,7 +15,7 @@ private struct ThemedRoot<Content: View>: View {
 
     var body: some View {
         Group {
-            if themes.id == .matrix {
+            if themes.id == .matrix || themes.id == .graffiti || themes.id == .custom {
                 content
                     .environment(themes)
                     .environment(sizeBridge)
@@ -43,6 +43,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private let windowShape: PanelWindowShape
     private var shapeBorderLayer: CAShapeLayer?
     private var tintOverlay: NSView?
+    private var muralView: MuralBackdropView?
     private var isApplyingSnap = false
 
     init<Content: View>(
@@ -123,6 +124,9 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         effect.layer?.masksToBounds = true
         effect.layer?.borderWidth = 0
         effect.layer?.borderColor = nil
+        let mural = MuralBackdropView(frame: effect.bounds)
+        mural.autoresizingMask = [.width, .height]
+        mural.isHidden = true
         let overlay = NSView(frame: effect.bounds)
         overlay.wantsLayer = true
         overlay.autoresizingMask = [.width, .height]
@@ -130,8 +134,10 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             clockGlass: clockGlass,
             palette: themeStore.palette
         ).cgColor
+        effect.addSubview(mural)
         effect.addSubview(overlay)
         effect.addSubview(hosting)
+        muralView = mural
         tintOverlay = overlay
         contentView = effect
         let resetMenu = makeResetSizeMenu()
@@ -194,11 +200,13 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             }
         }
         persistFrame()
+        muralView?.needsDisplay = true
     }
 
     func windowDidResize(_ notification: Notification) {
         persistFrame()
         applyWindowShape()
+        muralView?.needsDisplay = true
         guard layout.sizesToContent, !suppressResizeTracking else { return }
         guard layout.contentMeasureMode != .fillWidthGrowHeight else { return }
         userSized = true
@@ -208,6 +216,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
     func windowDidChangeScreen(_ notification: Notification) {
         applySizeLimits(Self.maxPanelSize(for: layout, screen: screen))
+        muralView?.needsDisplay = true
     }
 
     func applyThemeChrome() {
@@ -215,10 +224,19 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         if let effect = contentView as? NSVisualEffectView {
             effect.material = usesClockGlassTint ? .hudWindow : palette.glassMaterial
         }
-        tintOverlay?.layer?.backgroundColor = Self.panelTint(
-            clockGlass: usesClockGlassTint,
-            palette: palette
-        ).cgColor
+        if themeStore.id.usesMuralBackground {
+            muralView?.image = themeStore.muralImage()
+            muralView?.isHidden = false
+            muralView?.needsDisplay = true
+            tintOverlay?.layer?.backgroundColor = NSColor.clear.cgColor
+        } else {
+            muralView?.image = nil
+            muralView?.isHidden = true
+            tintOverlay?.layer?.backgroundColor = Self.panelTint(
+                clockGlass: usesClockGlassTint,
+                palette: palette
+            ).cgColor
+        }
         applyWindowShape()
     }
 
@@ -237,7 +255,10 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         case .chamferedBottomRight(let chamfer):
             view.layer?.cornerRadius = 0
             view.layer?.masksToBounds = true
-            guard view.bounds.width > 1, view.bounds.height > 1 else { return }
+            guard view.bounds.width > 1, view.bounds.height > 1 else {
+                muralView?.needsDisplay = true
+                return
+            }
             let mask = (view.layer?.mask as? CAShapeLayer) ?? CAShapeLayer()
             mask.path = ChamferedRect.appKitPath(in: view.bounds, chamfer: chamfer)
             view.layer?.mask = mask
@@ -246,6 +267,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             shapeBorderLayer?.removeFromSuperlayer()
             shapeBorderLayer = nil
         }
+        muralView?.needsDisplay = true
     }
 
     private static func panelTint(clockGlass: Bool, palette: ThemePalette) -> NSColor {

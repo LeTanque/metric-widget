@@ -3,9 +3,11 @@ import SwiftUI
 struct SystemPanelView: View {
     var store: MetricsStore
     var embedded: Bool = false
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let snap = store.snapshot
+        let chrome = themes.palette.arcade
         ArcadePanelSurface(embedded: embedded) {
             VStack(alignment: .leading, spacing: embedded ? 10 : 12) {
                 HStack(alignment: .center, spacing: 12) {
@@ -15,27 +17,27 @@ struct SystemPanelView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("STORAGE")
                             .font(ArcadeFont.font(size: 7))
-                            .foregroundStyle(ArcadeTileChrome.label)
+                            .foregroundStyle(chrome.label)
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(ByteFormat.bytes(snap.diskUsedBytes))
                                 .font(ArcadeFont.font(size: 8))
-                                .foregroundStyle(ArcadeTileChrome.value)
+                                .foregroundStyle(chrome.value)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.65)
                             Text("USED")
                                 .font(ArcadeFont.font(size: 8))
-                                .foregroundStyle(ArcadeTileChrome.label)
+                                .foregroundStyle(chrome.label)
                                 .lineLimit(1)
                         }
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Text(ByteFormat.bytes(snap.diskFreeBytes))
                                 .font(ArcadeFont.font(size: 8))
-                                .foregroundStyle(ArcadeTileChrome.value)
+                                .foregroundStyle(chrome.value)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.65)
                             Text("FREE")
                                 .font(ArcadeFont.font(size: 8))
-                                .foregroundStyle(ArcadeTileChrome.label)
+                                .foregroundStyle(chrome.label)
                                 .lineLimit(1)
                         }
                     }
@@ -46,7 +48,7 @@ struct SystemPanelView: View {
                     title: "CPU",
                     percent: snap.cpuPercent,
                     detail: "All cores",
-                    detailColor: ArcadeTileChrome.label
+                    detailColor: chrome.label
                 )
                 MeterBar(
                     title: "Memory",

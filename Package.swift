@@ -20,7 +20,8 @@ let package = Package(
             ],
             resources: [
                 .copy("Resources/Fonts/PressStart2P-Regular.ttf"),
-                .copy("Resources/Fonts/OFL.txt")
+                .copy("Resources/Fonts/OFL.txt"),
+                .copy("Resources/Graffiti/chinox-2016.jpg")
             ]
         )
     ]

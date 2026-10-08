@@ -204,11 +204,24 @@ final class PanelController {
         }
     }
 
+    func chooseCustomBackground() {
+        if themeStore.installCustomBackgroundFromOpenPanel() {
+            themeID = .custom
+        }
+        applyThemeToWindows()
+    }
+
+    func removeCustomBackground() {
+        themeStore.removeCustomBackground()
+        applyThemeToWindows()
+    }
+
     func openSettings() {
         usagePreferences.reload()
         clockPreferences.reload()
         let root = SettingsView(
             panels: self,
+            themes: themeStore,
             preferences: usagePreferences,
             clockPreferences: clockPreferences
         ) { [weak self] in

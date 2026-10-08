@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var panels: PanelController
+    @Bindable var themes: ThemeStore
     @Bindable var preferences: UsagePreferences
     @Bindable var clockPreferences: ClockPreferences
     var onSave: () -> Void
@@ -11,7 +12,7 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            enableOnlyTab(isOn: $panels.showMemory)
+            appMemoryTab
                 .tabItem { Text("App Memory") }
             clockTab
                 .tabItem { Text("Clock") }
@@ -23,6 +24,28 @@ struct SettingsView: View {
                 .tabItem { Text("Usage") }
         }
         .frame(width: 520, height: 640)
+    }
+
+    private var appMemoryTab: some View {
+        Form {
+            Section {
+                Toggle("Enable", isOn: $panels.showMemory)
+            }
+            Section("Theme") {
+                Button("Choose Picture…") {
+                    panels.chooseCustomBackground()
+                }
+                if let name = themes.customBackgroundFileName {
+                    Text(name)
+                    Button("Remove") {
+                        panels.removeCustomBackground()
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .scrollDisabled(true)
+        .padding()
     }
 
     private func enableOnlyTab(isOn: Binding<Bool>) -> some View {
