@@ -8,6 +8,8 @@ struct NetworkReading: Sendable {
     var publicIP: String
     var uploadBytesPerSec: Double
     var downloadBytesPerSec: Double
+    var peakUploadBytesPerSec: Double
+    var peakDownloadBytesPerSec: Double
     var history: [NetworkPoint]
 }
 
@@ -21,6 +23,8 @@ final class NetworkSampler: @unchecked Sendable {
     private var publicIP = "—"
     private var lastPublicIPFetch = Date.distantPast
     private var publicIPInFlight = false
+    private var peakUpload: Double = 0
+    private var peakDownload: Double = 0
 
     func sample() -> NetworkReading {
         refreshPublicIPIfNeeded()
@@ -42,6 +46,8 @@ final class NetworkSampler: @unchecked Sendable {
         lastIn = stats.bytesIn
         lastOut = stats.bytesOut
         lastUptime = now
+        peakUpload = max(peakUpload, upload)
+        peakDownload = max(peakDownload, download)
 
         history.append(NetworkPoint(id: nextIndex, upload: upload, download: download))
         nextIndex += 1
@@ -55,6 +61,8 @@ final class NetworkSampler: @unchecked Sendable {
             publicIP: publicIP,
             uploadBytesPerSec: upload,
             downloadBytesPerSec: download,
+            peakUploadBytesPerSec: peakUpload,
+            peakDownloadBytesPerSec: peakDownload,
             history: history
         )
     }

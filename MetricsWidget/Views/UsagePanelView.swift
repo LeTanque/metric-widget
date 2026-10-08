@@ -3,25 +3,24 @@ import SwiftUI
 struct UsagePanelView: View {
     var store: UsageStore
     var embedded: Bool = false
-    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
-        let p = themes.palette
-        PanelChrome(title: "Usage", symbol: "circle.bottomhalf.filled", compact: embedded, wrapContentWidth: !embedded) {
+        ArcadePanelSurface(embedded: embedded, wrapContentWidth: !embedded) {
             VStack(alignment: .leading, spacing: 12) {
                 if store.snapshot.providers.isEmpty {
-                    Text("Turn on Cursor, Grok Bot, OpenAI, or Anthropic in Settings.")
-                        .font(p.captionFont)
-                        .foregroundStyle(p.secondary)
+                    Text("TURN ON CURSOR, GROK BOT, OPENAI, OR ANTHROPIC IN SETTINGS.")
+                        .font(ArcadeFont.font(size: 7))
+                        .foregroundStyle(ArcadeTileChrome.label)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(store.snapshot.providers) { provider in
                         ProviderUsageBlock(provider: provider)
                     }
                 }
                 if let updated = store.snapshot.lastUpdated {
-                    Text("Updated \(updated.formatted(date: .omitted, time: .shortened))")
-                        .font(p.caption2Font)
-                        .foregroundStyle(p.tertiary)
+                    Text("UPDATED \(updated.formatted(date: .omitted, time: .shortened))")
+                        .font(ArcadeFont.font(size: 6))
+                        .foregroundStyle(ArcadeTileChrome.label)
                 }
             }
         }
@@ -30,38 +29,44 @@ struct UsagePanelView: View {
 
 private struct ProviderUsageBlock: View {
     let provider: ProviderUsage
-    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
-        let p = themes.palette
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline) {
-                Text(provider.title)
-                    .font(p.captionFont.weight(.semibold))
-                    .foregroundStyle(p.primary)
+                Text(provider.title.uppercased())
+                    .font(ArcadeFont.font(size: 8))
+                    .foregroundStyle(ArcadeTileChrome.value)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Spacer()
                 if !provider.resetLabel.isEmpty {
-                    Text(provider.resetLabel)
-                        .font(p.caption2Font)
-                        .foregroundStyle(p.secondary)
+                    Text(provider.resetLabel.uppercased())
+                        .font(ArcadeFont.font(size: 6))
+                        .foregroundStyle(ArcadeTileChrome.label)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
             }
-            Text(provider.subtitle)
-                .font(p.caption2Font)
-                .foregroundStyle(p.secondary)
+            Text(provider.subtitle.uppercased())
+                .font(ArcadeFont.font(size: 6))
+                .foregroundStyle(ArcadeTileChrome.label)
                 .lineLimit(1)
+                .minimumScaleFactor(0.6)
 
             if let error = provider.error {
                 Text(error)
-                    .font(p.captionFont)
-                    .foregroundStyle(p.warning)
+                    .font(ArcadeFont.font(size: 7))
+                    .foregroundStyle(ArcadeTileChrome.warning)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 if let percent = provider.percent {
-                    MeterBar(title: "Included spend remaining", percent: percent, detail: provider.detail)
+                    MeterBar(title: "Included spend remaining", percent: percent, detail: provider.detail, remaining: true)
                 } else {
                     Text(provider.detail)
-                        .font(p.valueFont.weight(.medium))
-                        .foregroundStyle(p.primary)
+                        .font(ArcadeFont.font(size: 8))
+                        .foregroundStyle(ArcadeTileChrome.value)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.65)
                 }
 
                 if !provider.quotaLines.isEmpty {
@@ -79,9 +84,10 @@ private struct ProviderUsageBlock: View {
 
                 if let footnote = provider.footnote {
                     Text(footnote)
-                        .font(p.caption2Font)
-                        .foregroundStyle(p.tertiary)
+                        .font(ArcadeFont.font(size: 6))
+                        .foregroundStyle(ArcadeTileChrome.label)
                         .padding(.top, 2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

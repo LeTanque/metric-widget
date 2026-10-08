@@ -1,15 +1,5 @@
 import SwiftUI
 
-private enum NetworkTileChrome {
-    static let upload = Color(red: 0.05, green: 0.55, blue: 1.0)
-    static let download = Color(red: 0.86, green: 0.08, blue: 0.24)
-    static let label = Color(white: 0.56)
-    static let value = Color.white
-    static let plotFill = Color.black
-    static let grid = Color.white.opacity(0.16)
-    static let baseline = Color.white.opacity(0.34)
-}
-
 struct NetworkPanelView: View {
     var store: MetricsStore
     var embedded: Bool = false
@@ -17,23 +7,24 @@ struct NetworkPanelView: View {
     var body: some View {
         let snap = store.snapshot
         let pad: CGFloat = embedded ? 8 : 10
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .firstTextBaseline) {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
                 RateLabel(
                     title: "DN",
                     value: ByteFormat.perSecond(snap.downloadBytesPerSec),
-                    indicator: NetworkTileChrome.download
+                    peak: ByteFormat.perSecond(snap.peakDownloadBytesPerSec),
+                    indicator: ArcadeTileChrome.download
                 )
-                Spacer(minLength: 8)
                 RateLabel(
                     title: "UP",
                     value: ByteFormat.perSecond(snap.uploadBytesPerSec),
-                    indicator: NetworkTileChrome.upload,
-                    alignment: .trailing
+                    peak: ByteFormat.perSecond(snap.peakUploadBytesPerSec),
+                    indicator: ArcadeTileChrome.upload
                 )
             }
             .padding(.horizontal, pad)
             .padding(.top, pad)
+            .padding(.bottom, 8)
 
             NetworkSparkline(points: snap.networkHistory)
                 .frame(maxWidth: .infinity)
@@ -41,11 +32,12 @@ struct NetworkPanelView: View {
                 .frame(maxHeight: embedded ? 36 : .infinity)
 
             VStack(alignment: .leading, spacing: 2) {
-                LabeledValue(label: "Interface", value: snap.interfaceName)
-                LabeledValue(label: "Computer IP", value: snap.localIP)
-                LabeledValue(label: "Outside IP", value: snap.publicIP)
+                ArcadeLabeledRow(label: "Interface", value: snap.interfaceName)
+                ArcadeLabeledRow(label: "Computer IP", value: snap.localIP)
+                ArcadeLabeledRow(label: "Outside IP", value: snap.publicIP)
             }
             .padding(.horizontal, pad)
+            .padding(.top, 8)
             .padding(.bottom, pad)
         }
         .frame(maxWidth: .infinity, maxHeight: embedded ? nil : .infinity, alignment: .topLeading)
@@ -56,7 +48,7 @@ struct NetworkPanelView: View {
         }
         .chamferedTileShape(border: embedded ? Color.white.opacity(0.22) : nil)
         .onAppear {
-            NetworkArcadeFont.register()
+            ArcadeFont.register()
         }
     }
 }
@@ -64,34 +56,61 @@ struct NetworkPanelView: View {
 private struct RateLabel: View {
     let title: String
     let value: String
+    let peak: String
     let indicator: Color
-    var alignment: HorizontalAlignment = .leading
 
     var body: some View {
         let parts = Self.splitRate(value)
-        VStack(alignment: alignment, spacing: 2) {
+        let peakParts = Self.splitRate(peak)
+        VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Text(title == "UP" ? "▲" : "▼")
-                    .font(NetworkArcadeFont.font(size: 8))
+                    .font(ArcadeFont.font(size: 8))
                     .foregroundStyle(indicator)
                 Text(title)
-                    .font(NetworkArcadeFont.font(size: 8))
-                    .foregroundStyle(NetworkTileChrome.label)
+                    .font(ArcadeFont.font(size: 8))
+                    .foregroundStyle(ArcadeTileChrome.label)
             }
-            HStack(alignment: .firstTextBaseline, spacing: 5) {
-                Text(parts.number)
-                    .font(NetworkArcadeFont.font(size: 11))
-                    .foregroundStyle(NetworkTileChrome.value)
-                    .monospacedDigit()
-                if !parts.unit.isEmpty {
-                    Text(parts.unit)
-                        .font(NetworkArcadeFont.font(size: 8))
-                        .foregroundStyle(NetworkTileChrome.label)
+            HStack(alignment: .center, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text(parts.number)
+                        .font(ArcadeFont.font(size: 11))
+                        .foregroundStyle(ArcadeTileChrome.value)
+                        .monospacedDigit()
                         .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.75)
+                    if !parts.unit.isEmpty {
+                        Text(parts.unit)
+                            .font(ArcadeFont.font(size: 8))
+                            .foregroundStyle(ArcadeTileChrome.label)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
                 }
+                .layoutPriority(1)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("PEAK")
+                        .font(ArcadeFont.font(size: 5))
+                        .foregroundStyle(ArcadeTileChrome.label)
+                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                        Text(peakParts.number)
+                            .font(ArcadeFont.font(size: 6))
+                            .foregroundStyle(ArcadeTileChrome.value)
+                            .monospacedDigit()
+                        if !peakParts.unit.isEmpty {
+                            Text(peakParts.unit)
+                                .font(ArcadeFont.font(size: 5))
+                                .foregroundStyle(ArcadeTileChrome.label)
+                        }
+                    }
+                }
+                .layoutPriority(-1)
+                .minimumScaleFactor(0.55)
             }
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private static func splitRate(_ raw: String) -> (number: String, unit: String) {
@@ -101,67 +120,15 @@ private struct RateLabel: View {
     }
 }
 
-private struct LabeledValue: View {
-    let label: String
-    let value: String
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Text(label.uppercased())
-                .font(NetworkArcadeFont.font(size: 7))
-                .foregroundStyle(NetworkTileChrome.label)
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
-            Spacer(minLength: 6)
-            Text(value)
-                .font(NetworkArcadeFont.font(size: 8))
-                .foregroundStyle(NetworkTileChrome.value)
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
-                .textSelection(.enabled)
-        }
-    }
-}
-
 private struct NetworkSparkline: View {
     var points: [NetworkPoint]
 
     var body: some View {
         Canvas { context, size in
-            let plot = CGRect(origin: .zero, size: size)
-            context.fill(Path(plot), with: .color(NetworkTileChrome.plotFill))
-
-            let rows = 4
-            for index in 0...rows {
-                let y = size.height * CGFloat(index) / CGFloat(rows)
-                var line = Path()
-                line.move(to: CGPoint(x: 0, y: y))
-                line.addLine(to: CGPoint(x: size.width, y: y))
-                let isBaseline = index == rows
-                context.stroke(
-                    line,
-                    with: .color(isBaseline ? NetworkTileChrome.baseline : NetworkTileChrome.grid),
-                    lineWidth: isBaseline ? 1 : 0.5
-                )
-            }
-
-            let ticks = 6
-            for index in 0...ticks {
-                let x = size.width * CGFloat(index) / CGFloat(ticks)
-                var vertical = Path()
-                vertical.move(to: CGPoint(x: x, y: 0))
-                vertical.addLine(to: CGPoint(x: x, y: size.height))
-                context.stroke(vertical, with: .color(NetworkTileChrome.grid.opacity(0.55)), lineWidth: 0.4)
-
-                var tick = Path()
-                tick.move(to: CGPoint(x: x, y: size.height))
-                tick.addLine(to: CGPoint(x: x, y: size.height - 3))
-                context.stroke(tick, with: .color(NetworkTileChrome.baseline), lineWidth: 0.7)
-            }
-
+            ArcadePlot.drawBackground(context: &context, size: size)
             let peak = max(points.map { max($0.upload, $0.download) }.max() ?? 0, 1)
-            strokeLine(points.map(\.download), color: NetworkTileChrome.download, peak: peak, size: size, context: &context)
-            strokeLine(points.map(\.upload), color: NetworkTileChrome.upload, peak: peak, size: size, context: &context)
+            strokeLine(points.map(\.download), color: ArcadeTileChrome.download, peak: peak, size: size, context: &context)
+            strokeLine(points.map(\.upload), color: ArcadeTileChrome.upload, peak: peak, size: size, context: &context)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

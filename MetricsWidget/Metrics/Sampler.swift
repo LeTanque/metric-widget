@@ -24,6 +24,8 @@ final class Sampler {
             publicIP: net.publicIP,
             uploadBytesPerSec: net.uploadBytesPerSec,
             downloadBytesPerSec: net.downloadBytesPerSec,
+            peakUploadBytesPerSec: net.peakUploadBytesPerSec,
+            peakDownloadBytesPerSec: net.peakDownloadBytesPerSec,
             networkHistory: net.history,
             processes: procs.items,
             processMemoryTotal: procs.totalRSS

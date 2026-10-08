@@ -2,7 +2,7 @@ import AppKit
 import CoreText
 import SwiftUI
 
-enum NetworkArcadeFont {
+enum ArcadeFont {
     static let familyName = "Press Start 2P"
     static let fallbackFamily = "Menlo"
     private static let registration: Void = {
