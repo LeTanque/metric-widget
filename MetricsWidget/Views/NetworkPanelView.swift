@@ -86,20 +86,19 @@ private struct LEDRateValue: View {
     let bytesPerSec: Double
     let numberSize: CGFloat
     let unitSize: CGFloat
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let parts = Self.rateParts(bytesPerSec)
         let slot = Self.ledSlot(parts.number)
+        let on = themes.palette.clockLED
+        let off = themes.palette.clockLEDOff
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             HStack(spacing: 0) {
                 ForEach(Array(slot.padded.enumerated()), id: \.offset) { index, character in
                     Text(String(character))
                         .font(ArcadeFont.font(size: numberSize))
-                        .foregroundStyle(
-                            index < slot.padCount
-                                ? Color.white.opacity(0.18)
-                                : ArcadeTileChrome.value
-                        )
+                        .foregroundStyle(index < slot.padCount ? off : on)
                         .frame(width: numberSize, alignment: .center)
                 }
             }
