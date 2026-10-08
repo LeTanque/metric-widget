@@ -5,14 +5,14 @@ import SwiftUI
 enum NetworkArcadeFont {
     static let familyName = "Press Start 2P"
     static let fallbackFamily = "Menlo"
-    private static var didRegister = false
-
-    static func register() {
-        guard !didRegister else { return }
-        didRegister = true
+    private static let registration: Void = {
         for url in fontURLs() {
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
+    }()
+
+    static func register() {
+        _ = registration
     }
 
     static func font(size: CGFloat) -> Font {
@@ -37,11 +37,6 @@ enum NetworkArcadeFont {
             seen.insert(path)
             found.append(url)
         }
-
-        #if SWIFT_PACKAGE
-        append(Bundle.module.url(forResource: "PressStart2P-Regular", withExtension: "ttf"))
-        append(Bundle.module.url(forResource: "PressStart2P-Regular", withExtension: "ttf", subdirectory: "Fonts"))
-        #endif
 
         append(Bundle.main.url(forResource: "PressStart2P-Regular", withExtension: "ttf"))
         append(Bundle.main.url(forResource: "PressStart2P-Regular", withExtension: "ttf", subdirectory: "Fonts"))
