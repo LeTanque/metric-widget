@@ -119,6 +119,11 @@ struct SettingsView: View {
                 Text("Paste an Admin key with api.usage.read.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                TextField("OpenAI monthly budget (USD)", text: $preferences.openaiMonthlyBudget)
+                    .onSubmit(saveKeys)
+                Text("Leave blank or 0 for no budget.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 SecureField("Anthropic Admin API key", text: $preferences.anthropicKey)
                     .onSubmit(saveKeys)
                 Button("Clear") {

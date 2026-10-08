@@ -68,7 +68,7 @@ private struct ProviderUsageBlock: View {
             } else {
                 if let percent = provider.percent {
                     MeterBar(
-                        title: "Included spend remaining",
+                        title: provider.meterTitle ?? "Included spend remaining",
                         percent: percent,
                         detail: provider.detail,
                         remaining: true,

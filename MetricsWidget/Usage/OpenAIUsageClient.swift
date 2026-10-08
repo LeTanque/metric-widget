@@ -1,7 +1,7 @@
 import Foundation
 
 enum OpenAIUsageClient {
-    static func fetch(apiKey: String) -> ProviderUsage {
+    static func fetch(apiKey: String, monthlyBudget: Double) -> ProviderUsage {
         let trimmed = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             return .placeholder(id: "openai", title: "OpenAI", message: "Add an Admin key in Settings")
@@ -52,14 +52,27 @@ enum OpenAIUsageClient {
         }
 
         let reset = UsageFormat.nextMonth()
+        let hasBudget = monthlyBudget > 0
+        let remainingPercent = hasBudget
+            ? min(100, max(0, (monthlyBudget - total) / monthlyBudget * 100))
+            : nil
+        let detail: String
+        if let remainingPercent {
+            let left = Int(remainingPercent.rounded())
+            detail = "\(UsageFormat.usd(total)) of \(UsageFormat.usd(monthlyBudget)) used · \(left)% left this month"
+        } else {
+            detail = "\(UsageFormat.usd(total)) this month"
+        }
         return ProviderUsage(
             id: "openai",
             title: "OpenAI",
             subtitle: "Calendar month · org costs",
-            detail: "\(UsageFormat.usd(total)) this month",
-            percent: nil,
+            detail: detail,
+            percent: remainingPercent,
             resetLabel: UsageFormat.countdown(to: reset),
-            error: nil
+            error: nil,
+            footnote: hasBudget ? nil : "Set a monthly budget in Settings to show a bar",
+            meterTitle: hasBudget ? "Budget remaining" : nil
         )
     }
 

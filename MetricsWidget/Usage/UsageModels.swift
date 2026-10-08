@@ -17,6 +17,7 @@ struct ProviderUsage: Identifiable, Sendable, Hashable {
     /// Included-plan quota bars (Cursor Models / Other Models). Empty for non-Cursor providers.
     var quotaLines: [UsageQuotaLine] = []
     var footnote: String?
+    var meterTitle: String?
 
     static func placeholder(id: String, title: String, message: String) -> ProviderUsage {
         ProviderUsage(

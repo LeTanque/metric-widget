@@ -12,7 +12,7 @@ enum UsageSampler {
         if preferences.openaiEnabled {
             let openAIKey = preferences.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines)
             if !openAIKey.isEmpty {
-                providers.append(OpenAIUsageClient.fetch(apiKey: openAIKey))
+                providers.append(OpenAIUsageClient.fetch(apiKey: openAIKey, monthlyBudget: preferences.openaiMonthlyBudget))
             }
         }
         if preferences.anthropicEnabled {
@@ -32,4 +32,5 @@ struct UsagePreferencesSnapshot: Sendable {
     var anthropicEnabled: Bool
     var openaiKey: String
     var anthropicKey: String
+    var openaiMonthlyBudget: Double
 }
