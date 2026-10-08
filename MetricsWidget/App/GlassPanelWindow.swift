@@ -42,6 +42,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private let windowShape: PanelWindowShape
     private var shapeBorderLayer: CAShapeLayer?
     private var tintOverlay: NSView?
+    private var isApplyingSnap = false
 
     init<Content: View>(
         id: String,
@@ -137,6 +138,14 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     override var canBecomeMain: Bool { false }
 
     func windowDidMove(_ notification: Notification) {
+        if !isApplyingSnap, NSEvent.pressedMouseButtons != 0 {
+            let snapped = PanelSnapper.origin(for: self)
+            if abs(snapped.x - frame.origin.x) > 0.5 || abs(snapped.y - frame.origin.y) > 0.5 {
+                isApplyingSnap = true
+                setFrameOrigin(snapped)
+                isApplyingSnap = false
+            }
+        }
         persistFrame()
     }
 
