@@ -266,6 +266,15 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         }
         let wKey = Self.widthKey(panelID)
         let hKey = Self.heightKey(panelID)
+        if panelID == "network" {
+            let migrateKey = Self.networkWidth320Key
+            if defaults.object(forKey: migrateKey) == nil {
+                defaults.set(true, forKey: migrateKey)
+                if defaults.object(forKey: wKey) != nil {
+                    defaults.set(layout.defaultSize.width, forKey: wKey)
+                }
+            }
+        }
         guard defaults.object(forKey: wKey) != nil, defaults.object(forKey: hKey) != nil else {
             return fallback
         }
@@ -406,4 +415,5 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private static func heightKey(_ id: String) -> String { "panel.\(id).height" }
     private static func userSizedKey(_ id: String) -> String { "panel.\(id).userSized" }
     private static func generationKey(_ id: String) -> String { "panel.\(id).frameGeneration" }
+    private static let networkWidth320Key = "panel.network.widthMigrated320"
 }

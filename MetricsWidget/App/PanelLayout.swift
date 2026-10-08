@@ -19,7 +19,7 @@ struct PanelLayout {
     var frameGeneration: Int = 1
 
     static let network = PanelLayout(
-        defaultSize: NSSize(width: 249, height: 160),
+        defaultSize: NSSize(width: 320, height: 160),
         minSize: NSSize(width: 220, height: 148),
         maxSize: NSSize(width: 390, height: 230),
         resizable: true,
