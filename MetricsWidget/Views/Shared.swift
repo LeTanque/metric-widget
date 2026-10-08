@@ -1,15 +1,21 @@
 import SwiftUI
 
 enum ArcadeTileChrome {
-    static let upload = Color(red: 0.86, green: 0.08, blue: 0.24)
-    static let download = Color(red: 0.05, green: 0.55, blue: 1.0)
-    static let accent = Color(red: 0.05, green: 0.55, blue: 1.0)
+    static let upload = Color(red: 255.0 / 255.0, green: 194.0 / 255.0, blue: 61.0 / 255.0)
+    static let download = Color(red: 47.0 / 255.0, green: 211.0 / 255.0, blue: 200.0 / 255.0)
+    static let accent = download
     static let warning = Color(red: 0.86, green: 0.08, blue: 0.24)
     static let label = Color(white: 0.56)
     static let value = Color.white
     static let plotFill = Color.black
     static let grid = Color.white.opacity(0.16)
     static let baseline = Color.white.opacity(0.34)
+}
+
+enum ArcadePanelMetrics {
+    static func inset(embedded: Bool) -> CGFloat {
+        embedded ? 8 : 10
+    }
 }
 
 enum ArcadePlot {
@@ -65,12 +71,8 @@ struct ArcadePanelSurface<Content: View>: View {
     var fillAvailableHeight: Bool = true
     @ViewBuilder var content: Content
 
-    static func inset(embedded: Bool) -> CGFloat {
-        embedded ? 8 : 10
-    }
-
     var body: some View {
-        let pad = Self.inset(embedded: embedded)
+        let pad = ArcadePanelMetrics.inset(embedded: embedded)
         content
             .padding(pad)
             .frame(
@@ -92,26 +94,36 @@ struct ArcadePanelSurface<Content: View>: View {
 }
 
 struct ArcadeFittingPair<Label: View, Value: View>: View {
-    var showsValue: Bool = true
-    @ViewBuilder var label: () -> Label
-    @ViewBuilder var value: () -> Value
+    var showsValue: Bool
+    var label: Label
+    var value: Value
+
+    init(
+        showsValue: Bool = true,
+        @ViewBuilder label: () -> Label,
+        @ViewBuilder value: () -> Value
+    ) {
+        self.showsValue = showsValue
+        self.label = label()
+        self.value = value()
+    }
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                label()
+                label
                     .fixedSize(horizontal: true, vertical: true)
                 Spacer(minLength: 6)
                 if showsValue {
-                    value()
+                    value
                         .fixedSize(horizontal: true, vertical: true)
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
-                label()
+                label
                     .fixedSize(horizontal: false, vertical: true)
                 if showsValue {
-                    value()
+                    value
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -168,9 +180,17 @@ struct ArcadeDiskMeter: View {
         let percent = fraction * 100
         let color = ArcadePlot.fillColor(percent: percent, remaining: false)
         Canvas { context, size in
-            ArcadePlot.drawBackground(context: &context, size: size, rows: 4, ticks: 4)
             let radius = min(size.width, size.height) * 0.34
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let plateRadius = radius + 3.5 + 5
+            var plate = Path()
+            plate.addEllipse(in: CGRect(
+                x: center.x - plateRadius,
+                y: center.y - plateRadius,
+                width: plateRadius * 2,
+                height: plateRadius * 2
+            ))
+            context.fill(plate, with: .color(ArcadeTileChrome.plotFill))
             var track = Path()
             track.addArc(
                 center: center,

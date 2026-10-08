@@ -16,7 +16,7 @@ struct UsagePanelView: View {
                     ForEach(store.snapshot.providers) { provider in
                         ProviderUsageBlock(
                             provider: provider,
-                            inset: ArcadePanelSurface.inset(embedded: embedded)
+                            inset: ArcadePanelMetrics.inset(embedded: embedded)
                         )
                     }
                 }
