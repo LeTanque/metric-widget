@@ -41,10 +41,11 @@ shopt -s nullglob
 for bundle in "$BIN_DIR/MetricsWidget_MetricsWidget.bundle" "$BIN_DIR/MetricsWidget.bundle"; do
   if [[ -d "$bundle" ]]; then
     cp -R "$bundle" "$RESOURCES/"
-    cp -R "$bundle" "$MACOS/"
   fi
 done
 shopt -u nullglob
+
+printf '%s' 'APPL????' > "$CONTENTS/PkgInfo"
 
 cat > "$CONTENTS/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -54,7 +55,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>MetricsWidget</string>
+	<string>Metrics</string>
 	<key>CFBundleExecutable</key>
 	<string>MetricsWidget</string>
 	<key>CFBundleIconFile</key>
