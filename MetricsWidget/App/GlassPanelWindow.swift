@@ -41,6 +41,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private var usesClockGlassTint = false
     private let windowShape: PanelWindowShape
     private var shapeBorderLayer: CAShapeLayer?
+    private var tintOverlay: NSView?
 
     init<Content: View>(
         id: String,
@@ -75,7 +76,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
         isOpaque = false
         backgroundColor = .clear
-        hasShadow = true
+        hasShadow = false
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
         isMovableByWindowBackground = true
@@ -106,23 +107,26 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         hosting.frame = NSRect(origin: .zero, size: layout.defaultSize)
         hosting.autoresizingMask = [.width, .height]
 
-        if #available(macOS 26.0, *) {
-            let glass = NSGlassEffectView()
-            glass.cornerRadius = Self.roundedRadius(for: shape)
-            glass.style = .regular
-            glass.contentView = hosting
-            contentView = glass
-        } else {
-            let effect = NSVisualEffectView(frame: NSRect(origin: .zero, size: layout.defaultSize))
-            effect.material = themeStore.palette.glassMaterial
-            effect.blendingMode = .behindWindow
-            effect.state = .active
-            effect.wantsLayer = true
-            effect.layer?.cornerRadius = Self.roundedRadius(for: shape)
-            effect.layer?.masksToBounds = true
-            effect.addSubview(hosting)
-            contentView = effect
-        }
+        let effect = NSVisualEffectView(frame: NSRect(origin: .zero, size: layout.defaultSize))
+        effect.material = themeStore.palette.glassMaterial
+        effect.blendingMode = .behindWindow
+        effect.state = .active
+        effect.wantsLayer = true
+        effect.layer?.cornerRadius = Self.roundedRadius(for: shape)
+        effect.layer?.masksToBounds = true
+        effect.layer?.borderWidth = 0
+        effect.layer?.borderColor = nil
+        let overlay = NSView(frame: effect.bounds)
+        overlay.wantsLayer = true
+        overlay.autoresizingMask = [.width, .height]
+        overlay.layer?.backgroundColor = Self.panelTint(
+            clockGlass: clockGlass,
+            palette: themeStore.palette
+        ).cgColor
+        effect.addSubview(overlay)
+        effect.addSubview(hosting)
+        tintOverlay = overlay
+        contentView = effect
 
         restoreFrame(defaultSize: restoredSize(fallback: layout.defaultSize))
         applyThemeChrome()
@@ -151,13 +155,13 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
     func applyThemeChrome() {
         let palette = themeStore.palette
-        let tint = usesClockGlassTint ? palette.clockGlassTint : palette.glassTint
-        if #available(macOS 26.0, *) {
-            (contentView as? NSGlassEffectView)?.tintColor = tint
-        }
         if let effect = contentView as? NSVisualEffectView {
             effect.material = usesClockGlassTint ? .hudWindow : palette.glassMaterial
         }
+        tintOverlay?.layer?.backgroundColor = Self.panelTint(
+            clockGlass: usesClockGlassTint,
+            palette: palette
+        ).cgColor
         applyWindowShape()
     }
 
@@ -171,17 +175,11 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             view.layer?.masksToBounds = true
             view.layer?.borderWidth = 0
             view.layer?.borderColor = nil
-            if #available(macOS 26.0, *) {
-                (view as? NSGlassEffectView)?.cornerRadius = radius
-            }
             shapeBorderLayer?.removeFromSuperlayer()
             shapeBorderLayer = nil
         case .chamferedBottomRight(let chamfer):
             view.layer?.cornerRadius = 0
             view.layer?.masksToBounds = true
-            if #available(macOS 26.0, *) {
-                (view as? NSGlassEffectView)?.cornerRadius = 0
-            }
             guard view.bounds.width > 1, view.bounds.height > 1 else { return }
             let mask = (view.layer?.mask as? CAShapeLayer) ?? CAShapeLayer()
             mask.path = ChamferedRect.appKitPath(in: view.bounds, chamfer: chamfer)
@@ -190,8 +188,14 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             view.layer?.borderColor = nil
             shapeBorderLayer?.removeFromSuperlayer()
             shapeBorderLayer = nil
-            invalidateShadow()
         }
+    }
+
+    private static func panelTint(clockGlass: Bool, palette: ThemePalette) -> NSColor {
+        if clockGlass {
+            return palette.clockGlassTint
+        }
+        return palette.glassTint ?? .clear
     }
 
     private static func roundedRadius(for shape: PanelWindowShape) -> CGFloat {
