@@ -108,6 +108,7 @@ final class PanelController {
                     id: "network",
                     layout: .network,
                     themeStore: themeStore,
+                    shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
                     rootView: NetworkPanelView(store: store)
                 )
             }
@@ -201,7 +202,7 @@ final class PanelController {
                         id: panelID,
                         layout: .clock,
                         themeStore: themeStore,
-                        cornerRadius: 10,
+                        shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
                         clockGlass: true,
                         rootView: ClockPanelView(zone: zone)
                     )

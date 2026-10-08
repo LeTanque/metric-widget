@@ -1,6 +1,11 @@
 import AppKit
 import SwiftUI
 
+enum PanelWindowShape: Equatable {
+    case rounded(CGFloat)
+    case chamferedBottomRight(CGFloat)
+}
+
 private struct ThemedRoot<Content: View>: View {
     var themes: ThemeStore
     var sizeBridge: PanelSizeBridge
@@ -34,18 +39,21 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private var suppressResizeTracking = false
     private var userSized = false
     private var usesClockGlassTint = false
+    private let windowShape: PanelWindowShape
+    private var shapeBorderLayer: CAShapeLayer?
 
     init<Content: View>(
         id: String,
         layout: PanelLayout,
         themeStore: ThemeStore,
-        cornerRadius: CGFloat = 20,
+        shape: PanelWindowShape = .rounded(20),
         clockGlass: Bool = false,
         rootView: Content
     ) {
         self.panelID = id
         self.themeStore = themeStore
         self.layout = layout
+        self.windowShape = shape
         self.usesClockGlassTint = clockGlass
 
         var mask: NSWindow.StyleMask = [.borderless, .nonactivatingPanel]
@@ -100,7 +108,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
         if #available(macOS 26.0, *) {
             let glass = NSGlassEffectView()
-            glass.cornerRadius = cornerRadius
+            glass.cornerRadius = Self.roundedRadius(for: shape)
             glass.style = .regular
             glass.contentView = hosting
             contentView = glass
@@ -110,7 +118,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             effect.blendingMode = .behindWindow
             effect.state = .active
             effect.wantsLayer = true
-            effect.layer?.cornerRadius = cornerRadius
+            effect.layer?.cornerRadius = Self.roundedRadius(for: shape)
             effect.layer?.masksToBounds = true
             effect.addSubview(hosting)
             contentView = effect
@@ -130,6 +138,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
     func windowDidResize(_ notification: Notification) {
         persistFrame()
+        applyWindowShape()
         guard layout.sizesToContent, !suppressResizeTracking else { return }
         userSized = true
         UserDefaults.standard.set(true, forKey: Self.userSizedKey(panelID))
@@ -148,6 +157,57 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         }
         if let effect = contentView as? NSVisualEffectView {
             effect.material = usesClockGlassTint ? .hudWindow : palette.glassMaterial
+        }
+        applyWindowShape()
+    }
+
+    private func applyWindowShape() {
+        guard let view = contentView else { return }
+        view.wantsLayer = true
+        switch windowShape {
+        case .rounded(let radius):
+            view.layer?.mask = nil
+            view.layer?.cornerRadius = radius
+            view.layer?.masksToBounds = true
+            if #available(macOS 26.0, *) {
+                (view as? NSGlassEffectView)?.cornerRadius = radius
+            }
+            shapeBorderLayer?.removeFromSuperlayer()
+            shapeBorderLayer = nil
+        case .chamferedBottomRight(let chamfer):
+            view.layer?.cornerRadius = 0
+            view.layer?.masksToBounds = true
+            if #available(macOS 26.0, *) {
+                (view as? NSGlassEffectView)?.cornerRadius = 0
+            }
+            guard view.bounds.width > 1, view.bounds.height > 1 else { return }
+            let mask = (view.layer?.mask as? CAShapeLayer) ?? CAShapeLayer()
+            mask.path = ChamferedRect.appKitPath(in: view.bounds, chamfer: chamfer)
+            view.layer?.mask = mask
+
+            let border = shapeBorderLayer ?? CAShapeLayer()
+            border.fillColor = nil
+            border.strokeColor = NSColor.white.withAlphaComponent(0.22).cgColor
+            border.lineWidth = 1
+            border.zPosition = 1000
+            border.path = ChamferedRect.appKitPath(
+                in: view.bounds.insetBy(dx: 0.5, dy: 0.5),
+                chamfer: chamfer
+            )
+            if shapeBorderLayer == nil {
+                view.layer?.addSublayer(border)
+                shapeBorderLayer = border
+            }
+            invalidateShadow()
+        }
+    }
+
+    private static func roundedRadius(for shape: PanelWindowShape) -> CGFloat {
+        switch shape {
+        case .rounded(let radius):
+            return radius
+        case .chamferedBottomRight:
+            return 0
         }
     }
 
@@ -180,11 +240,25 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
 
         suppressResizeTracking = true
         setContentSize(NSSize(width: targetW, height: targetH))
+        applyWindowShape()
         suppressResizeTracking = false
     }
 
     private func restoredSize(fallback: NSSize) -> NSSize {
         let defaults = UserDefaults.standard
+        let generationKey = Self.generationKey(panelID)
+        let storedGeneration = defaults.integer(forKey: generationKey)
+        if layout.frameGeneration > 1, storedGeneration < layout.frameGeneration {
+            defaults.removeObject(forKey: Self.widthKey(panelID))
+            defaults.removeObject(forKey: Self.heightKey(panelID))
+            defaults.set(false, forKey: Self.userSizedKey(panelID))
+            defaults.set(layout.frameGeneration, forKey: generationKey)
+            userSized = false
+            return fallback
+        }
+        if storedGeneration != layout.frameGeneration {
+            defaults.set(layout.frameGeneration, forKey: generationKey)
+        }
         let wKey = Self.widthKey(panelID)
         let hKey = Self.heightKey(panelID)
         guard defaults.object(forKey: wKey) != nil, defaults.object(forKey: hKey) != nil else {
@@ -326,4 +400,5 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     private static func widthKey(_ id: String) -> String { "panel.\(id).width" }
     private static func heightKey(_ id: String) -> String { "panel.\(id).height" }
     private static func userSizedKey(_ id: String) -> String { "panel.\(id).userSized" }
+    private static func generationKey(_ id: String) -> String { "panel.\(id).frameGeneration" }
 }
