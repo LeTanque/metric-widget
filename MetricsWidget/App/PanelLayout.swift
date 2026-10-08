@@ -51,9 +51,9 @@ struct PanelLayout {
         frameGeneration: 2
     )
     static let usage = PanelLayout(
-        defaultSize: NSSize(width: 360, height: 340),
-        minSize: NSSize(width: 300, height: 160),
-        maxSize: NSSize(width: 460, height: 600),
+        defaultSize: NSSize(width: 320, height: 340),
+        minSize: NSSize(width: 320, height: 80),
+        maxSize: NSSize(width: 320, height: 600),
         resizable: true,
         sizesToContent: true,
         contentMeasureMode: .fillWidthGrowHeight,

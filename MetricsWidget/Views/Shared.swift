@@ -62,6 +62,7 @@ enum ArcadePlot {
 struct ArcadePanelSurface<Content: View>: View {
     var embedded: Bool
     var wrapContentWidth: Bool = false
+    var fillAvailableHeight: Bool = true
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -70,7 +71,7 @@ struct ArcadePanelSurface<Content: View>: View {
             .padding(pad)
             .frame(
                 maxWidth: wrapContentWidth ? nil : .infinity,
-                maxHeight: embedded ? nil : .infinity,
+                maxHeight: (embedded || !fillAvailableHeight) ? nil : .infinity,
                 alignment: .topLeading
             )
             .fixedSize(horizontal: wrapContentWidth, vertical: wrapContentWidth)
@@ -83,6 +84,35 @@ struct ArcadePanelSurface<Content: View>: View {
             .onAppear {
                 ArcadeFont.register()
             }
+    }
+}
+
+struct ArcadeFittingPair<Label: View, Value: View>: View {
+    var showsValue: Bool = true
+    @ViewBuilder var label: () -> Label
+    @ViewBuilder var value: () -> Value
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                label()
+                    .fixedSize(horizontal: true, vertical: true)
+                Spacer(minLength: 6)
+                if showsValue {
+                    value()
+                        .fixedSize(horizontal: true, vertical: true)
+                }
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                label()
+                    .fixedSize(horizontal: false, vertical: true)
+                if showsValue {
+                    value()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -194,6 +224,7 @@ struct MeterBar: View {
     var remaining: Bool = false
     var detailColor: Color = ArcadeTileChrome.value
     var compact: Bool = false
+    var wrapWhenTight: Bool = false
 
     var body: some View {
         let clamped = min(max(percent, 0), 100)
@@ -202,23 +233,35 @@ struct MeterBar: View {
         let valueSize: CGFloat = compact ? 7 : 8
 
         VStack(alignment: .leading, spacing: 3) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(title.uppercased())
-                    .font(ArcadeFont.font(size: titleSize))
-                    .foregroundStyle(ArcadeTileChrome.label)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Spacer(minLength: 6)
-                if !detail.isEmpty {
+            if wrapWhenTight {
+                ArcadeFittingPair(showsValue: !detail.isEmpty) {
+                    Text(title.uppercased())
+                        .font(ArcadeFont.font(size: titleSize))
+                        .foregroundStyle(ArcadeTileChrome.label)
+                } value: {
                     Text(detail)
                         .font(ArcadeFont.font(size: titleSize))
                         .foregroundStyle(detailColor)
+                }
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(title.uppercased())
+                        .font(ArcadeFont.font(size: titleSize))
+                        .foregroundStyle(ArcadeTileChrome.label)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .layoutPriority(-1)
+                    Spacer(minLength: 6)
+                    if !detail.isEmpty {
+                        Text(detail)
+                            .font(ArcadeFont.font(size: titleSize))
+                            .foregroundStyle(detailColor)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .layoutPriority(-1)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
             HStack(alignment: .center, spacing: 6) {
                 Canvas { context, size in
                     ArcadePlot.drawBackground(context: &context, size: size, rows: 3, ticks: 8)
