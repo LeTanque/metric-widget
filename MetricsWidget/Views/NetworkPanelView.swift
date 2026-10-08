@@ -4,9 +4,11 @@ import SwiftUI
 struct NetworkPanelView: View {
     var store: MetricsStore
     var embedded: Bool = false
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let snap = store.snapshot
+        let chrome = themes.palette.arcade
         let pad: CGFloat = embedded ? 8 : 10
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: 0) {
@@ -14,14 +16,14 @@ struct NetworkPanelView: View {
                     title: "DN",
                     bytesPerSec: snap.downloadBytesPerSec,
                     peakBytesPerSec: snap.peakDownloadBytesPerSec,
-                    indicator: ArcadeTileChrome.download
+                    indicator: chrome.download
                 )
                 Spacer(minLength: 8)
                 RateLabel(
                     title: "UP",
                     bytesPerSec: snap.uploadBytesPerSec,
                     peakBytesPerSec: snap.peakUploadBytesPerSec,
-                    indicator: ArcadeTileChrome.upload,
+                    indicator: chrome.upload,
                     alignment: .trailing
                 )
             }
@@ -29,7 +31,7 @@ struct NetworkPanelView: View {
             .padding(.top, pad)
             .padding(.bottom, 8)
 
-            NetworkSparkline(points: snap.networkHistory)
+            NetworkSparkline(points: snap.networkHistory, chrome: chrome)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: embedded ? 28 : 32)
                 .frame(maxHeight: embedded ? 36 : .infinity)
@@ -62,6 +64,7 @@ private struct RateLabel: View {
     let peakBytesPerSec: Double
     let indicator: Color
     var alignment: HorizontalAlignment = .leading
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         VStack(alignment: alignment, spacing: 2) {
@@ -71,12 +74,12 @@ private struct RateLabel: View {
                     .foregroundStyle(indicator)
                 Text(title)
                     .font(ArcadeFont.font(size: 8))
-                    .foregroundStyle(ArcadeTileChrome.label)
+                    .foregroundStyle(themes.palette.arcade.label)
             }
             LEDRateValue(bytesPerSec: bytesPerSec, numberSize: 11, unitSize: 8)
             Text("PEAK")
                 .font(ArcadeFont.font(size: 6))
-                .foregroundStyle(ArcadeTileChrome.label)
+                .foregroundStyle(themes.palette.arcade.label)
             LEDRateValue(bytesPerSec: peakBytesPerSec, numberSize: 10, unitSize: 7)
         }
     }
@@ -105,7 +108,7 @@ private struct LEDRateValue: View {
             if !parts.unit.isEmpty {
                 Text(parts.unit)
                     .font(ArcadeFont.font(size: unitSize))
-                    .foregroundStyle(ArcadeTileChrome.label)
+                    .foregroundStyle(themes.palette.arcade.label)
                     .lineLimit(1)
             }
         }
@@ -140,13 +143,14 @@ private struct LEDRateValue: View {
 
 private struct NetworkSparkline: View {
     var points: [NetworkPoint]
+    var chrome: ArcadeChrome
 
     var body: some View {
         Canvas { context, size in
-            ArcadePlot.drawBackground(context: &context, size: size)
+            ArcadePlot.drawBackground(context: &context, size: size, chrome: chrome)
             let peak = max(points.map { max($0.upload, $0.download) }.max() ?? 0, 1)
-            strokeLine(points.map(\.download), color: ArcadeTileChrome.download, peak: peak, size: size, context: &context)
-            strokeLine(points.map(\.upload), color: ArcadeTileChrome.upload, peak: peak, size: size, context: &context)
+            strokeLine(points.map(\.download), color: chrome.download, peak: peak, size: size, context: &context)
+            strokeLine(points.map(\.upload), color: chrome.upload, peak: peak, size: size, context: &context)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

@@ -17,6 +17,8 @@ I built this because I miss my Gnome desktop. I like borderless windows with no 
 
 **Usage** - If you use Cursor, Grok Bot, OpenAI, or Claude, you can enter an API key in **Settings → Usage** to configure usage stats. Grows/shrinks with provider content when you have not manually resized it
 
+**Themes** - Pick a theme from the menu bar. The Graffiti theme uses a photo of a mural by Chinox (2016). Custom lets you pick your own picture in Settings.
+
 **Panel sizing** — drag any panel edge/corner to resize (click the panel first so it becomes focused). 
 
 

@@ -5,6 +5,7 @@ struct LEDSevenSegmentTime: View {
     var date: Date
     var timeZone: TimeZone = .current
     var ledColor: Color
+    var ledOffColor: Color? = nil
     var blinkColon: Bool = true
     var digitHeight: CGFloat
     var segmentThickness: CGFloat = 1
@@ -39,6 +40,7 @@ struct LEDSevenSegmentTime: View {
             LEDDigit(
                 digit: parts.hourTens,
                 color: ledColor,
+                offColor: ledOffColor,
                 blank: parts.hourTens == 0,
                 size: digitSize,
                 thicknessScale: segmentThickness
@@ -46,19 +48,22 @@ struct LEDSevenSegmentTime: View {
             LEDDigit(
                 digit: parts.hourOnes,
                 color: ledColor,
+                offColor: ledOffColor,
                 size: digitSize,
                 thicknessScale: segmentThickness
             )
-            LEDColon(color: ledColor, lit: colonLit, size: colonSize)
+            LEDColon(color: ledColor, offColor: ledOffColor, lit: colonLit, size: colonSize)
             LEDDigit(
                 digit: parts.minuteTens,
                 color: ledColor,
+                offColor: ledOffColor,
                 size: digitSize,
                 thicknessScale: segmentThickness
             )
             LEDDigit(
                 digit: parts.minuteOnes,
                 color: ledColor,
+                offColor: ledOffColor,
                 size: digitSize,
                 thicknessScale: segmentThickness
             )
@@ -93,6 +98,7 @@ enum LEDGlyphMetrics {
 
 private struct LEDColon: View {
     var color: Color
+    var offColor: Color? = nil
     var lit: Bool = true
     var size: CGSize
 
@@ -100,7 +106,7 @@ private struct LEDColon: View {
         GeometryReader { geo in
             let base = min(geo.size.width, geo.size.height)
             let dot = max(base * 0.22, 4)
-            let fill = lit ? color : ClockLEDChrome.off(color)
+            let fill = lit ? color : (offColor ?? ClockLEDChrome.off(color))
             VStack(spacing: geo.size.height * 0.18) {
                 Circle().fill(fill).frame(width: dot, height: dot)
                 Circle().fill(fill).frame(width: dot, height: dot)
@@ -114,6 +120,7 @@ private struct LEDColon: View {
 private struct LEDDigit: View {
     var digit: Int
     var color: Color
+    var offColor: Color? = nil
     var blank: Bool = false
     var size: CGSize
     var thicknessScale: CGFloat = 1
@@ -148,7 +155,7 @@ private struct LEDDigit: View {
 
     @ViewBuilder
     private func segment(_ kind: SegmentKind, w: CGFloat, h: CGFloat, t: CGFloat, gap: CGFloat, on: Bool) -> some View {
-        let fill = on ? color : ClockLEDChrome.off(color)
+        let fill = on ? color : (offColor ?? ClockLEDChrome.off(color))
         let glow = on ? color.opacity(0.55) : .clear
         switch kind {
         case .top:

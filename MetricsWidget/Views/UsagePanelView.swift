@@ -3,14 +3,16 @@ import SwiftUI
 struct UsagePanelView: View {
     var store: UsageStore
     var embedded: Bool = false
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let chrome = themes.palette.arcade
         ArcadePanelSurface(embedded: embedded, fillAvailableHeight: false) {
             VStack(alignment: .leading, spacing: 12) {
                 if store.snapshot.providers.isEmpty {
                     Text("NO PROVIDERS CONFIGURED.")
                         .font(ArcadeFont.font(size: 6))
-                        .foregroundStyle(ArcadeTileChrome.label)
+                        .foregroundStyle(chrome.label)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(store.snapshot.providers) { provider in
@@ -24,7 +26,7 @@ struct UsagePanelView: View {
                 if let updated = store.snapshot.lastUpdated {
                     Text("UPDATED \(updated.formatted(date: .omitted, time: .shortened))")
                         .font(ArcadeFont.font(size: 5))
-                        .foregroundStyle(ArcadeTileChrome.label)
+                        .foregroundStyle(chrome.label)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -37,29 +39,31 @@ private struct ProviderUsageBlock: View {
     let provider: ProviderUsage
     var inset: CGFloat
     var flushTop: Bool
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let chrome = themes.palette.arcade
         VStack(alignment: .leading, spacing: 5) {
             SectionHeaderBand(inset: inset, flushTop: flushTop) {
                 ArcadeFittingPair(showsValue: !provider.resetLabel.isEmpty) {
                     Text(provider.title.uppercased())
                         .font(ArcadeFont.font(size: 7))
-                        .foregroundStyle(ArcadeTileChrome.value)
+                        .foregroundStyle(chrome.value)
                 } value: {
                     Text(provider.resetLabel.uppercased())
                         .font(ArcadeFont.font(size: 5))
-                        .foregroundStyle(ArcadeTileChrome.label)
+                        .foregroundStyle(chrome.label)
                 }
             }
             Text(provider.subtitle.uppercased())
                 .font(ArcadeFont.font(size: 5))
-                .foregroundStyle(ArcadeTileChrome.label)
+                .foregroundStyle(chrome.label)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let error = provider.error {
                 Text(error)
                     .font(ArcadeFont.font(size: 6))
-                    .foregroundStyle(ArcadeTileChrome.warning)
+                    .foregroundStyle(chrome.warning)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 if let percent = provider.percent {
@@ -74,7 +78,7 @@ private struct ProviderUsageBlock: View {
                 } else {
                     Text(provider.detail)
                         .font(ArcadeFont.font(size: 7))
-                        .foregroundStyle(ArcadeTileChrome.value)
+                        .foregroundStyle(chrome.value)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -96,7 +100,7 @@ private struct ProviderUsageBlock: View {
                 if let footnote = provider.footnote {
                     Text(footnote)
                         .font(ArcadeFont.font(size: 5))
-                        .foregroundStyle(ArcadeTileChrome.label)
+                        .foregroundStyle(chrome.label)
                         .padding(.top, 2)
                         .fixedSize(horizontal: false, vertical: true)
                 }

@@ -37,6 +37,13 @@ if [[ -f "$FONT_SRC" ]]; then
   cp "$FONT_SRC" "$RESOURCES/Fonts/PressStart2P-Regular.ttf"
 fi
 
+MURAL_SRC="$ROOT/MetricsWidget/Resources/Graffiti/chinox-2016.jpg"
+if [[ -f "$MURAL_SRC" ]]; then
+  mkdir -p "$RESOURCES/Graffiti"
+  cp "$MURAL_SRC" "$RESOURCES/chinox-2016.jpg"
+  cp "$MURAL_SRC" "$RESOURCES/Graffiti/chinox-2016.jpg"
+fi
+
 shopt -s nullglob
 for bundle in "$BIN_DIR/MetricsWidget_MetricsWidget.bundle" "$BIN_DIR/MetricsWidget.bundle"; do
   if [[ -d "$bundle" ]]; then

@@ -23,10 +23,11 @@ enum ArcadePlot {
         context: inout GraphicsContext,
         size: CGSize,
         rows: Int = 4,
-        ticks: Int = 6
+        ticks: Int = 6,
+        chrome: ArcadeChrome = .standard
     ) {
         let plot = CGRect(origin: .zero, size: size)
-        context.fill(Path(plot), with: .color(ArcadeTileChrome.plotFill))
+        context.fill(Path(plot), with: .color(chrome.plotFill))
 
         guard size.width > 1, size.height > 1 else { return }
 
@@ -38,7 +39,7 @@ enum ArcadePlot {
             let isBaseline = index == rows
             context.stroke(
                 line,
-                with: .color(isBaseline ? ArcadeTileChrome.baseline : ArcadeTileChrome.grid),
+                with: .color(isBaseline ? chrome.baseline : chrome.grid),
                 lineWidth: isBaseline ? 1 : 0.5
             )
         }
@@ -48,20 +49,20 @@ enum ArcadePlot {
             var vertical = Path()
             vertical.move(to: CGPoint(x: x, y: 0))
             vertical.addLine(to: CGPoint(x: x, y: size.height))
-            context.stroke(vertical, with: .color(ArcadeTileChrome.grid.opacity(0.55)), lineWidth: 0.4)
+            context.stroke(vertical, with: .color(chrome.grid.opacity(0.55)), lineWidth: 0.4)
 
             var tick = Path()
             tick.move(to: CGPoint(x: x, y: size.height))
             tick.addLine(to: CGPoint(x: x, y: size.height - 3))
-            context.stroke(tick, with: .color(ArcadeTileChrome.baseline), lineWidth: 0.7)
+            context.stroke(tick, with: .color(chrome.baseline), lineWidth: 0.7)
         }
     }
 
-    static func fillColor(percent: Double, remaining: Bool) -> Color {
+    static func fillColor(percent: Double, remaining: Bool, chrome: ArcadeChrome = .standard) -> Color {
         if remaining {
-            return percent <= 20 ? ArcadeTileChrome.warning : ArcadeTileChrome.accent
+            return percent <= 20 ? chrome.warning : chrome.accent
         }
-        return percent >= 80 ? ArcadeTileChrome.warning : ArcadeTileChrome.accent
+        return percent >= 80 ? chrome.warning : chrome.accent
     }
 }
 
@@ -152,20 +153,22 @@ struct SectionHeaderBand<Content: View>: View {
 struct ArcadeLabeledRow: View {
     let label: String
     let value: String
-    var valueColor: Color = ArcadeTileChrome.value
-    var labelColor: Color = ArcadeTileChrome.label
+    var valueColor: Color? = nil
+    var labelColor: Color? = nil
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let chrome = themes.palette.arcade
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(label.uppercased())
                 .font(ArcadeFont.font(size: 7))
-                .foregroundStyle(labelColor)
+                .foregroundStyle(labelColor ?? chrome.label)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
             Spacer(minLength: 6)
             Text(value)
                 .font(ArcadeFont.font(size: 8))
-                .foregroundStyle(valueColor)
+                .foregroundStyle(valueColor ?? chrome.value)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
                 .textSelection(.enabled)
@@ -176,11 +179,13 @@ struct ArcadeLabeledRow: View {
 struct ArcadeDiskMeter: View {
     var used: UInt64
     var total: UInt64
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let chrome = themes.palette.arcade
         let fraction = total > 0 ? min(max(Double(used) / Double(total), 0), 1) : 0
         let percent = fraction * 100
-        let color = ArcadePlot.fillColor(percent: percent, remaining: false)
+        let color = ArcadePlot.fillColor(percent: percent, remaining: false, chrome: chrome)
         Canvas { context, size in
             let radius = min(size.width, size.height) * 0.34
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -192,7 +197,7 @@ struct ArcadeDiskMeter: View {
                 width: plateRadius * 2,
                 height: plateRadius * 2
             ))
-            context.fill(plate, with: .color(ArcadeTileChrome.plotFill))
+            context.fill(plate, with: .color(chrome.plotFill))
             var track = Path()
             track.addArc(
                 center: center,
@@ -201,7 +206,7 @@ struct ArcadeDiskMeter: View {
                 endAngle: .degrees(360),
                 clockwise: false
             )
-            context.stroke(track, with: .color(ArcadeTileChrome.grid), style: StrokeStyle(lineWidth: 7))
+            context.stroke(track, with: .color(chrome.grid), style: StrokeStyle(lineWidth: 7))
             if fraction > 0 {
                 var usedPath = Path()
                 usedPath.addArc(
@@ -218,10 +223,10 @@ struct ArcadeDiskMeter: View {
             VStack(spacing: 2) {
                 Text("DISK")
                     .font(ArcadeFont.font(size: 6))
-                    .foregroundStyle(ArcadeTileChrome.label)
+                    .foregroundStyle(chrome.label)
                 Text(total > 0 ? "\(Int(percent.rounded()))%" : "—")
                     .font(ArcadeFont.font(size: 8))
-                    .foregroundStyle(ArcadeTileChrome.value)
+                    .foregroundStyle(chrome.value)
                     .monospacedDigit()
             }
         }
@@ -264,13 +269,15 @@ struct MeterBar: View {
     let percent: Double
     let detail: String
     var remaining: Bool = false
-    var detailColor: Color = ArcadeTileChrome.value
+    var detailColor: Color? = nil
     var compact: Bool = false
     var wrapWhenTight: Bool = false
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
+        let chrome = themes.palette.arcade
         let clamped = min(max(percent, 0), 100)
-        let fill = ArcadePlot.fillColor(percent: clamped, remaining: remaining)
+        let fill = ArcadePlot.fillColor(percent: clamped, remaining: remaining, chrome: chrome)
         let titleSize: CGFloat = compact ? 6 : 7
         let valueSize: CGFloat = compact ? 7 : 8
 
@@ -279,24 +286,24 @@ struct MeterBar: View {
                 ArcadeFittingPair(showsValue: !detail.isEmpty) {
                     Text(title.uppercased())
                         .font(ArcadeFont.font(size: titleSize))
-                        .foregroundStyle(ArcadeTileChrome.label)
+                        .foregroundStyle(chrome.label)
                 } value: {
                     Text(detail)
                         .font(ArcadeFont.font(size: titleSize))
-                        .foregroundStyle(detailColor)
+                        .foregroundStyle(detailColor ?? chrome.value)
                 }
             } else {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(title.uppercased())
                         .font(ArcadeFont.font(size: titleSize))
-                        .foregroundStyle(ArcadeTileChrome.label)
+                        .foregroundStyle(chrome.label)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     Spacer(minLength: 6)
                     if !detail.isEmpty {
                         Text(detail)
                             .font(ArcadeFont.font(size: titleSize))
-                            .foregroundStyle(detailColor)
+                            .foregroundStyle(detailColor ?? chrome.value)
                             .lineLimit(1)
                             .truncationMode(.tail)
                             .layoutPriority(-1)
@@ -306,7 +313,7 @@ struct MeterBar: View {
             }
             HStack(alignment: .center, spacing: 6) {
                 Canvas { context, size in
-                    ArcadePlot.drawBackground(context: &context, size: size, rows: 3, ticks: 8)
+                    ArcadePlot.drawBackground(context: &context, size: size, rows: 3, ticks: 8, chrome: chrome)
                     let width = size.width * CGFloat(clamped / 100)
                     if width > 0 {
                         let bar = Path(CGRect(x: 0, y: 2, width: width, height: max(size.height - 4, 1)))
@@ -322,7 +329,7 @@ struct MeterBar: View {
 
                 Text("\(Int(clamped.rounded()))%")
                     .font(ArcadeFont.font(size: valueSize))
-                    .foregroundStyle(ArcadeTileChrome.value)
+                    .foregroundStyle(chrome.value)
                     .monospacedDigit()
                     .frame(minWidth: 28, alignment: .trailing)
                     .lineLimit(1)

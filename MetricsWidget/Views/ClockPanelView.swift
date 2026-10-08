@@ -79,6 +79,7 @@ struct ClockPanelView: View {
                         date: date,
                         timeZone: timeZone,
                         ledColor: p.clockLED,
+                        ledOffColor: p.clockLEDOff,
                         blinkColon: true,
                         digitHeight: ClockWidgetReference.digitHeight,
                         segmentThickness: 1.25
