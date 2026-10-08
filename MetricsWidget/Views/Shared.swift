@@ -168,9 +168,17 @@ struct ArcadeDiskMeter: View {
         let percent = fraction * 100
         let color = ArcadePlot.fillColor(percent: percent, remaining: false)
         Canvas { context, size in
-            ArcadePlot.drawBackground(context: &context, size: size, rows: 4, ticks: 4)
             let radius = min(size.width, size.height) * 0.34
             let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            let plateRadius = radius + 3.5 + 5
+            var plate = Path()
+            plate.addEllipse(in: CGRect(
+                x: center.x - plateRadius,
+                y: center.y - plateRadius,
+                width: plateRadius * 2,
+                height: plateRadius * 2
+            ))
+            context.fill(plate, with: .color(ArcadeTileChrome.plotFill))
             var track = Path()
             track.addArc(
                 center: center,
