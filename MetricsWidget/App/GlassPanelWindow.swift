@@ -413,7 +413,6 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             switch panelID {
             case "memory": cascade = 360
             case "system": cascade = 680
-            case "combined": cascade = 24
             case "usage": cascade = 1010
             default:
                 if panelID.hasPrefix("clock.") {
@@ -423,7 +422,6 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
                 }
             }
             let yOffset: CGFloat = {
-                if panelID == "combined" { return 300 }
                 if panelID.hasPrefix("clock.") { return 28 + CGFloat(abs(panelID.hashValue % 120)) }
                 return 28
             }()
