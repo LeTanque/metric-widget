@@ -1,5 +1,161 @@
 import SwiftUI
 
+enum ArcadeTileChrome {
+    static let upload = Color(red: 0.86, green: 0.08, blue: 0.24)
+    static let download = Color(red: 0.05, green: 0.55, blue: 1.0)
+    static let accent = Color(red: 0.05, green: 0.55, blue: 1.0)
+    static let warning = Color(red: 0.86, green: 0.08, blue: 0.24)
+    static let label = Color(white: 0.56)
+    static let value = Color.white
+    static let plotFill = Color.black
+    static let grid = Color.white.opacity(0.16)
+    static let baseline = Color.white.opacity(0.34)
+}
+
+enum ArcadePlot {
+    static func drawBackground(
+        context: inout GraphicsContext,
+        size: CGSize,
+        rows: Int = 4,
+        ticks: Int = 6
+    ) {
+        let plot = CGRect(origin: .zero, size: size)
+        context.fill(Path(plot), with: .color(ArcadeTileChrome.plotFill))
+
+        guard size.width > 1, size.height > 1 else { return }
+
+        for index in 0...rows {
+            let y = size.height * CGFloat(index) / CGFloat(rows)
+            var line = Path()
+            line.move(to: CGPoint(x: 0, y: y))
+            line.addLine(to: CGPoint(x: size.width, y: y))
+            let isBaseline = index == rows
+            context.stroke(
+                line,
+                with: .color(isBaseline ? ArcadeTileChrome.baseline : ArcadeTileChrome.grid),
+                lineWidth: isBaseline ? 1 : 0.5
+            )
+        }
+
+        for index in 0...ticks {
+            let x = size.width * CGFloat(index) / CGFloat(ticks)
+            var vertical = Path()
+            vertical.move(to: CGPoint(x: x, y: 0))
+            vertical.addLine(to: CGPoint(x: x, y: size.height))
+            context.stroke(vertical, with: .color(ArcadeTileChrome.grid.opacity(0.55)), lineWidth: 0.4)
+
+            var tick = Path()
+            tick.move(to: CGPoint(x: x, y: size.height))
+            tick.addLine(to: CGPoint(x: x, y: size.height - 3))
+            context.stroke(tick, with: .color(ArcadeTileChrome.baseline), lineWidth: 0.7)
+        }
+    }
+
+    static func fillColor(percent: Double, remaining: Bool) -> Color {
+        if remaining {
+            return percent <= 20 ? ArcadeTileChrome.warning : ArcadeTileChrome.accent
+        }
+        return percent >= 80 ? ArcadeTileChrome.warning : ArcadeTileChrome.accent
+    }
+}
+
+struct ArcadePanelSurface<Content: View>: View {
+    var embedded: Bool
+    var wrapContentWidth: Bool = false
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        let pad: CGFloat = embedded ? 8 : 10
+        content
+            .padding(pad)
+            .frame(
+                maxWidth: wrapContentWidth ? nil : .infinity,
+                maxHeight: embedded ? nil : .infinity,
+                alignment: .topLeading
+            )
+            .fixedSize(horizontal: wrapContentWidth, vertical: wrapContentWidth)
+            .background {
+                if embedded {
+                    ChamferedRectangle().fill(Color.black.opacity(0.18))
+                }
+            }
+            .chamferedTileShape(border: embedded ? Color.white.opacity(0.22) : nil)
+            .onAppear {
+                ArcadeFont.register()
+            }
+    }
+}
+
+struct ArcadeLabeledRow: View {
+    let label: String
+    let value: String
+    var valueColor: Color = ArcadeTileChrome.value
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(label.uppercased())
+                .font(ArcadeFont.font(size: 7))
+                .foregroundStyle(ArcadeTileChrome.label)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+            Spacer(minLength: 6)
+            Text(value)
+                .font(ArcadeFont.font(size: 8))
+                .foregroundStyle(valueColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.65)
+                .textSelection(.enabled)
+        }
+    }
+}
+
+struct ArcadeDiskMeter: View {
+    var used: UInt64
+    var total: UInt64
+
+    var body: some View {
+        let fraction = total > 0 ? min(max(Double(used) / Double(total), 0), 1) : 0
+        let percent = fraction * 100
+        let color = ArcadePlot.fillColor(percent: percent, remaining: false)
+        Canvas { context, size in
+            ArcadePlot.drawBackground(context: &context, size: size, rows: 4, ticks: 4)
+            let radius = min(size.width, size.height) * 0.34
+            let center = CGPoint(x: size.width / 2, y: size.height / 2)
+            var track = Path()
+            track.addArc(
+                center: center,
+                radius: radius,
+                startAngle: .degrees(0),
+                endAngle: .degrees(360),
+                clockwise: false
+            )
+            context.stroke(track, with: .color(ArcadeTileChrome.grid), style: StrokeStyle(lineWidth: 7))
+            if fraction > 0 {
+                var usedPath = Path()
+                usedPath.addArc(
+                    center: center,
+                    radius: radius,
+                    startAngle: .degrees(-90),
+                    endAngle: .degrees(-90 + 360 * fraction),
+                    clockwise: false
+                )
+                context.stroke(usedPath, with: .color(color), style: StrokeStyle(lineWidth: 7, lineCap: .butt))
+            }
+        }
+        .overlay {
+            VStack(spacing: 2) {
+                Text("DISK")
+                    .font(ArcadeFont.font(size: 6))
+                    .foregroundStyle(ArcadeTileChrome.label)
+                Text(total > 0 ? "\(Int(percent.rounded()))%" : "—")
+                    .font(ArcadeFont.font(size: 8))
+                    .foregroundStyle(ArcadeTileChrome.value)
+                    .monospacedDigit()
+            }
+        }
+    }
+}
+
 struct PanelChrome<Content: View>: View {
     let title: String
     let symbol: String
@@ -35,73 +191,51 @@ struct MeterBar: View {
     let title: String
     let percent: Double
     let detail: String
-    private let segmentCount = 10
-
-    @Environment(ThemeStore.self) private var themes
+    var remaining: Bool = false
 
     var body: some View {
-        let p = themes.palette
         let clamped = min(max(percent, 0), 100)
-        let lit = Int((clamped / 100 * Double(segmentCount)).rounded(.toNearestOrAwayFromZero))
+        let fill = ArcadePlot.fillColor(percent: clamped, remaining: remaining)
 
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                    .font(p.captionFont)
-                    .foregroundStyle(p.secondary)
-                Spacer()
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(title.uppercased())
+                    .font(ArcadeFont.font(size: 7))
+                    .foregroundStyle(ArcadeTileChrome.label)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
+                Spacer(minLength: 6)
                 if !detail.isEmpty {
                     Text(detail)
-                        .font(p.valueFont)
-                        .foregroundStyle(p.secondary)
+                        .font(ArcadeFont.font(size: 7))
+                        .foregroundStyle(ArcadeTileChrome.value)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                 }
             }
-            HStack(alignment: .center, spacing: 8) {
-                GeometryReader { geo in
-                    let gap: CGFloat = 3
-                    let totalGap = gap * CGFloat(segmentCount - 1)
-                    let segmentWidth = max(2, (geo.size.width - totalGap) / CGFloat(segmentCount))
-
-                    HStack(spacing: gap) {
-                        ForEach(0..<segmentCount, id: \.self) { index in
-                            let isLit = index < lit
-                            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                .fill(isLit ? p.segmentOn : p.segmentOff)
-                                .frame(width: segmentWidth)
-                                .overlay {
-                                    if isLit {
-                                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                            .fill(
-                                                LinearGradient(
-                                                    colors: [
-                                                        p.segmentOn.opacity(0.55),
-                                                        p.segmentOn,
-                                                        p.segmentOn.opacity(0.75)
-                                                    ],
-                                                    startPoint: .top,
-                                                    endPoint: .bottom
-                                                )
-                                            )
-                                    }
-                                }
-                                .shadow(
-                                    color: p.segmentGlow && isLit ? p.segmentOn.opacity(0.85) : .clear,
-                                    radius: p.segmentGlow ? 4 : 0
-                                )
-                                .shadow(
-                                    color: p.segmentGlow && isLit ? p.segmentOn.opacity(0.45) : .clear,
-                                    radius: p.segmentGlow ? 8 : 0
-                                )
-                        }
+            HStack(alignment: .center, spacing: 6) {
+                Canvas { context, size in
+                    ArcadePlot.drawBackground(context: &context, size: size, rows: 3, ticks: 8)
+                    let width = size.width * CGFloat(clamped / 100)
+                    if width > 0 {
+                        let bar = Path(CGRect(x: 0, y: 2, width: width, height: max(size.height - 4, 1)))
+                        context.fill(bar, with: .color(fill.opacity(0.85)))
+                        var edge = Path()
+                        edge.move(to: CGPoint(x: width, y: 1))
+                        edge.addLine(to: CGPoint(x: width, y: size.height - 1))
+                        context.stroke(edge, with: .color(fill), lineWidth: 1.2)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 }
-                .frame(height: 22)
+                .frame(maxWidth: .infinity)
+                .frame(height: 16)
 
                 Text("\(Int(clamped.rounded()))%")
-                    .font(p.valueFont.weight(.semibold))
-                    .foregroundStyle(p.barLabel)
-                    .frame(minWidth: 34, alignment: .trailing)
+                    .font(ArcadeFont.font(size: 8))
+                    .foregroundStyle(ArcadeTileChrome.value)
+                    .monospacedDigit()
+                    .frame(minWidth: 28, alignment: .trailing)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
         }
     }

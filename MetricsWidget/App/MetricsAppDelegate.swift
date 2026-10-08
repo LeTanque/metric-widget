@@ -5,7 +5,7 @@ final class MetricsAppDelegate: NSObject, NSApplicationDelegate {
     weak var panelController: PanelController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NetworkArcadeFont.register()
+        ArcadeFont.register()
         NSApp.activate(ignoringOtherApps: true)
     }
 

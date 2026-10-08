@@ -18,41 +18,45 @@ struct PanelLayout {
     var frameGeneration: Int = 1
 
     static let network = PanelLayout(
-        defaultSize: NSSize(width: 332, height: 114),
-        minSize: NSSize(width: 260, height: 80),
-        maxSize: NSSize(width: 520, height: 190),
+        defaultSize: NSSize(width: 249, height: 128),
+        minSize: NSSize(width: 220, height: 120),
+        maxSize: NSSize(width: 390, height: 200),
+        resizable: true,
+        sizesToContent: false,
+        frameGeneration: 3
+    )
+    static let memory = PanelLayout(
+        defaultSize: NSSize(width: 320, height: 268),
+        minSize: NSSize(width: 260, height: 180),
+        maxSize: NSSize(width: 520, height: 420),
         resizable: true,
         sizesToContent: false,
         frameGeneration: 2
     )
-    static let memory = PanelLayout(
-        defaultSize: NSSize(width: 292, height: 268),
-        minSize: NSSize(width: 240, height: 180),
-        maxSize: NSSize(width: 480, height: 420),
-        resizable: true,
-        sizesToContent: false
-    )
     static let system = PanelLayout(
-        defaultSize: NSSize(width: 300, height: 248),
-        minSize: NSSize(width: 240, height: 180),
-        maxSize: NSSize(width: 480, height: 400),
+        defaultSize: NSSize(width: 320, height: 252),
+        minSize: NSSize(width: 260, height: 180),
+        maxSize: NSSize(width: 520, height: 400),
         resizable: true,
-        sizesToContent: false
+        sizesToContent: false,
+        frameGeneration: 2
     )
     static let combined = PanelLayout(
-        defaultSize: NSSize(width: 640, height: 468),
-        minSize: NSSize(width: 480, height: 360),
-        maxSize: NSSize(width: 900, height: 720),
+        defaultSize: NSSize(width: 700, height: 520),
+        minSize: NSSize(width: 520, height: 380),
+        maxSize: NSSize(width: 960, height: 760),
         resizable: true,
-        sizesToContent: false
+        sizesToContent: false,
+        frameGeneration: 2
     )
     static let usage = PanelLayout(
-        defaultSize: NSSize(width: 340, height: 320),
-        minSize: NSSize(width: 280, height: 140),
-        maxSize: NSSize(width: 420, height: 560),
+        defaultSize: NSSize(width: 360, height: 340),
+        minSize: NSSize(width: 300, height: 160),
+        maxSize: NSSize(width: 460, height: 600),
         resizable: true,
         sizesToContent: true,
-        contentMeasureMode: .wrapWidthGrowHeight
+        contentMeasureMode: .wrapWidthGrowHeight,
+        frameGeneration: 2
     )
     static let clock = PanelLayout(
         defaultSize: ClockPanelWindowSize.size,

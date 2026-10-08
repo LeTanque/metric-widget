@@ -123,6 +123,7 @@ final class PanelController {
                     id: "memory",
                     layout: .memory,
                     themeStore: themeStore,
+                    shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
                     rootView: AppMemoryPanelView(store: store)
                 )
             }
@@ -137,6 +138,7 @@ final class PanelController {
                     id: "system",
                     layout: .system,
                     themeStore: themeStore,
+                    shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
                     rootView: SystemPanelView(store: store)
                 )
             }
@@ -151,6 +153,7 @@ final class PanelController {
                     id: "combined",
                     layout: .combined,
                     themeStore: themeStore,
+                    shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
                     rootView: CombinedPanelView(store: store, usageStore: usageStore)
                 )
             }
@@ -165,6 +168,7 @@ final class PanelController {
                     id: "usage",
                     layout: .usage,
                     themeStore: themeStore,
+                    shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
                     rootView: UsagePanelView(store: usageStore)
                 )
             }

@@ -8,25 +8,31 @@ struct CombinedPanelView: View {
         HStack(alignment: .top, spacing: 16) {
             VStack(alignment: .leading, spacing: 12) {
                 NetworkPanelView(store: store, embedded: true)
-                Divider()
-                    .opacity(0.35)
+                Rectangle()
+                    .fill(ArcadeTileChrome.grid)
+                    .frame(height: 1)
                 SystemPanelView(store: store, embedded: true)
             }
             .frame(maxWidth: .infinity, alignment: .topLeading)
 
-            Divider()
-                .opacity(0.35)
+            Rectangle()
+                .fill(ArcadeTileChrome.grid)
+                .frame(width: 1)
 
             VStack(alignment: .leading, spacing: 12) {
                 AppMemoryPanelView(store: store, embedded: true, rowLimit: 5)
-                Divider()
-                    .opacity(0.35)
+                Rectangle()
+                    .fill(ArcadeTileChrome.grid)
+                    .frame(height: 1)
                 UsagePanelView(store: usageStore, embedded: true)
             }
-            .frame(width: 240, alignment: .topLeading)
+            .frame(width: 268, alignment: .topLeading)
         }
         .padding(14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(.clear)
+        .onAppear {
+            ArcadeFont.register()
+        }
     }
 }

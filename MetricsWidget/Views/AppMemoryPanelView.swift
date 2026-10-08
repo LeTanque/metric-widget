@@ -4,41 +4,34 @@ struct AppMemoryPanelView: View {
     var store: MetricsStore
     var embedded: Bool = false
     var rowLimit: Int = 8
-    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let snap = store.snapshot
         let rows = Array(snap.processes.prefix(rowLimit))
-        let p = themes.palette
-        PanelChrome(title: "App Memory", symbol: "memorychip", compact: embedded) {
+        ArcadePanelSurface(embedded: embedded) {
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text("Top RSS")
-                        .font(p.captionFont)
-                        .foregroundStyle(p.secondary)
-                    Spacer()
-                    Text(ByteFormat.bytes(snap.processMemoryTotal))
-                        .font(p.valueFont.weight(.medium))
-                        .foregroundStyle(p.primary)
-                }
+                ArcadeLabeledRow(label: "Top RSS", value: ByteFormat.bytes(snap.processMemoryTotal))
 
                 if rows.isEmpty {
-                    Text("Collecting…")
-                        .font(p.captionFont)
-                        .foregroundStyle(p.tertiary)
+                    Text("COLLECTING…")
+                        .font(ArcadeFont.font(size: 7))
+                        .foregroundStyle(ArcadeTileChrome.label)
                         .frame(maxWidth: .infinity, minHeight: embedded ? 40 : 80, alignment: .center)
                 } else {
                     VStack(spacing: 5) {
                         ForEach(rows) { process in
                             HStack(spacing: 8) {
                                 Text(process.name)
-                                    .font(p.captionFont)
-                                    .foregroundStyle(p.primary)
+                                    .font(ArcadeFont.font(size: 7))
+                                    .foregroundStyle(ArcadeTileChrome.label)
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.6)
                                 Spacer(minLength: 8)
                                 Text(ByteFormat.bytes(process.rss))
-                                    .font(p.valueFont)
-                                    .foregroundStyle(p.secondary)
+                                    .font(ArcadeFont.font(size: 8))
+                                    .foregroundStyle(ArcadeTileChrome.value)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.65)
                             }
                         }
                     }

@@ -26,6 +26,8 @@ struct MetricsSnapshot: Sendable {
     var publicIP: String
     var uploadBytesPerSec: Double
     var downloadBytesPerSec: Double
+    var peakUploadBytesPerSec: Double
+    var peakDownloadBytesPerSec: Double
     var networkHistory: [NetworkPoint]
     var processes: [ProcessMemory]
     var processMemoryTotal: UInt64
@@ -43,6 +45,8 @@ struct MetricsSnapshot: Sendable {
         publicIP: "—",
         uploadBytesPerSec: 0,
         downloadBytesPerSec: 0,
+        peakUploadBytesPerSec: 0,
+        peakDownloadBytesPerSec: 0,
         networkHistory: [],
         processes: [],
         processMemoryTotal: 0
