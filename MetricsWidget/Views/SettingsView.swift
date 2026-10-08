@@ -52,7 +52,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .scrollDisabled(true)
         .padding()
     }
 
@@ -106,7 +105,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .scrollDisabled(true)
         .padding()
     }
 
