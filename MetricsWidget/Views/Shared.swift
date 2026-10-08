@@ -1,9 +1,9 @@
 import SwiftUI
 
 enum ArcadeTileChrome {
-    static let upload = Color(red: 0.86, green: 0.08, blue: 0.24)
-    static let download = Color(red: 0.05, green: 0.55, blue: 1.0)
-    static let accent = Color(red: 0.05, green: 0.55, blue: 1.0)
+    static let upload = Color(red: 255.0 / 255.0, green: 194.0 / 255.0, blue: 61.0 / 255.0)
+    static let download = Color(red: 47.0 / 255.0, green: 211.0 / 255.0, blue: 200.0 / 255.0)
+    static let accent = download
     static let warning = Color(red: 0.86, green: 0.08, blue: 0.24)
     static let label = Color(white: 0.56)
     static let value = Color.white
