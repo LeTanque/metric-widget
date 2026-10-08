@@ -19,7 +19,8 @@ let package = Package(
                 "Assets.xcassets"
             ],
             resources: [
-                .copy("Resources/Fonts/PressStart2P-Regular.ttf")
+                .copy("Resources/Fonts/PressStart2P-Regular.ttf"),
+                .copy("Resources/Fonts/OFL.txt")
             ]
         )
     ]
