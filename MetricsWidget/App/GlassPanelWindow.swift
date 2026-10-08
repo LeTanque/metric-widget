@@ -262,10 +262,12 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
     }
 
     private func adoptFillWidthMeasuredHeight(_ measuredHeight: CGFloat) {
+        let visible = visibleScreenFrame()
         let limit = Self.maxPanelSize(for: layout, screen: screen)
         let current = contentRect(forFrameRect: frame).size
+        let maxHeight = min(limit.height, visible.height)
         let targetW = Self.clamp(layout.defaultSize.width, min: layout.minSize.width, max: limit.width)
-        let targetH = Self.clamp(measuredHeight, min: layout.minSize.height, max: limit.height)
+        let targetH = Self.clamp(measuredHeight, min: min(layout.minSize.height, maxHeight), max: maxHeight)
 
         guard abs(targetW - current.width) > 0.5 || abs(targetH - current.height) > 0.5 else { return }
 
@@ -277,10 +279,23 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         if abs(deltaH) > 0.5 {
             setFrameOrigin(NSPoint(x: oldFrame.origin.x, y: oldFrame.origin.y - deltaH))
         }
+        clampOriginToVisibleFrame(visible)
         applyWindowShape()
         persistFrame()
         suppressResizeTracking = false
         isAdoptingMeasuredSize = false
+    }
+
+    private func clampOriginToVisibleFrame(_ visible: NSRect) {
+        var origin = frame.origin
+        let size = frame.size
+        let maxX = max(visible.minX, visible.maxX - size.width)
+        let maxY = max(visible.minY, visible.maxY - size.height)
+        origin.x = min(max(origin.x, visible.minX), maxX)
+        origin.y = min(max(origin.y, visible.minY), maxY)
+        if abs(origin.x - frame.origin.x) > 0.5 || abs(origin.y - frame.origin.y) > 0.5 {
+            setFrameOrigin(origin)
+        }
     }
 
     private func restoredSize(fallback: NSSize) -> NSSize {

@@ -12,6 +12,12 @@ enum ArcadeTileChrome {
     static let baseline = Color.white.opacity(0.34)
 }
 
+enum ArcadePanelMetrics {
+    static func inset(embedded: Bool) -> CGFloat {
+        embedded ? 8 : 10
+    }
+}
+
 enum ArcadePlot {
     static func drawBackground(
         context: inout GraphicsContext,
@@ -65,12 +71,8 @@ struct ArcadePanelSurface<Content: View>: View {
     var fillAvailableHeight: Bool = true
     @ViewBuilder var content: Content
 
-    static func inset(embedded: Bool) -> CGFloat {
-        embedded ? 8 : 10
-    }
-
     var body: some View {
-        let pad = Self.inset(embedded: embedded)
+        let pad = ArcadePanelMetrics.inset(embedded: embedded)
         content
             .padding(pad)
             .frame(
@@ -92,26 +94,36 @@ struct ArcadePanelSurface<Content: View>: View {
 }
 
 struct ArcadeFittingPair<Label: View, Value: View>: View {
-    var showsValue: Bool = true
-    @ViewBuilder var label: () -> Label
-    @ViewBuilder var value: () -> Value
+    var showsValue: Bool
+    var label: Label
+    var value: Value
+
+    init(
+        showsValue: Bool = true,
+        @ViewBuilder label: () -> Label,
+        @ViewBuilder value: () -> Value
+    ) {
+        self.showsValue = showsValue
+        self.label = label()
+        self.value = value()
+    }
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                label()
+                label
                     .fixedSize(horizontal: true, vertical: true)
                 Spacer(minLength: 6)
                 if showsValue {
-                    value()
+                    value
                         .fixedSize(horizontal: true, vertical: true)
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
-                label()
+                label
                     .fixedSize(horizontal: false, vertical: true)
                 if showsValue {
-                    value()
+                    value
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
