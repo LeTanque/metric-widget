@@ -43,15 +43,8 @@ struct ChamferedRectangle: Shape {
 
 extension View {
     func chamferedTileShape(
-        chamfer: CGFloat = ChamferedRect.defaultChamfer,
-        border: Color? = Color.white.opacity(0.22)
+        chamfer: CGFloat = ChamferedRect.defaultChamfer
     ) -> some View {
-        let shape = ChamferedRectangle(chamfer: chamfer)
-        return clipShape(shape)
-            .overlay {
-                if let border {
-                    shape.stroke(border, lineWidth: 1)
-                }
-            }
+        clipShape(ChamferedRectangle(chamfer: chamfer))
     }
 }

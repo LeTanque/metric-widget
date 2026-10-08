@@ -16,16 +16,28 @@ struct SystemPanelView: View {
                         Text("STORAGE")
                             .font(ArcadeFont.font(size: 7))
                             .foregroundStyle(ArcadeTileChrome.label)
-                        Text("\(ByteFormat.bytes(snap.diskUsedBytes)) used")
-                            .font(ArcadeFont.font(size: 8))
-                            .foregroundStyle(ArcadeTileChrome.value)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.65)
-                        Text("\(ByteFormat.bytes(snap.diskFreeBytes)) free")
-                            .font(ArcadeFont.font(size: 8))
-                            .foregroundStyle(ArcadeTileChrome.value)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.65)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(ByteFormat.bytes(snap.diskUsedBytes))
+                                .font(ArcadeFont.font(size: 8))
+                                .foregroundStyle(ArcadeTileChrome.value)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                            Text("USED")
+                                .font(ArcadeFont.font(size: 8))
+                                .foregroundStyle(ArcadeTileChrome.label)
+                                .lineLimit(1)
+                        }
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            Text(ByteFormat.bytes(snap.diskFreeBytes))
+                                .font(ArcadeFont.font(size: 8))
+                                .foregroundStyle(ArcadeTileChrome.value)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                            Text("FREE")
+                                .font(ArcadeFont.font(size: 8))
+                                .foregroundStyle(ArcadeTileChrome.label)
+                                .lineLimit(1)
+                        }
                     }
                     Spacer(minLength: 0)
                 }
@@ -33,7 +45,8 @@ struct SystemPanelView: View {
                 MeterBar(
                     title: "CPU",
                     percent: snap.cpuPercent,
-                    detail: "All cores"
+                    detail: "All cores",
+                    detailColor: ArcadeTileChrome.label
                 )
                 MeterBar(
                     title: "Memory",
@@ -41,6 +54,7 @@ struct SystemPanelView: View {
                     detail: "\(ByteFormat.bytes(snap.ramUsedBytes)) / \(ByteFormat.bytes(snap.ramTotalBytes))"
                 )
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

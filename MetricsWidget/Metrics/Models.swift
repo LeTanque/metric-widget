@@ -59,6 +59,7 @@ enum ByteFormat {
         formatter.countStyle = .memory
         formatter.allowedUnits = [.useKB, .useMB, .useGB, .useTB]
         formatter.isAdaptive = true
+        formatter.allowsNonnumericFormatting = false
         return formatter.string(fromByteCount: Int64(clamping: value))
     }
 
@@ -67,6 +68,7 @@ enum ByteFormat {
         formatter.countStyle = .file
         formatter.allowedUnits = [.useKB, .useMB, .useGB]
         formatter.isAdaptive = true
+        formatter.allowsNonnumericFormatting = false
         let clamped = max(0, bytesPerSec)
         return formatter.string(fromByteCount: Int64(clamped.rounded())) + "/s"
     }

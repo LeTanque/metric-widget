@@ -169,6 +169,8 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             view.layer?.mask = nil
             view.layer?.cornerRadius = radius
             view.layer?.masksToBounds = true
+            view.layer?.borderWidth = 0
+            view.layer?.borderColor = nil
             if #available(macOS 26.0, *) {
                 (view as? NSGlassEffectView)?.cornerRadius = radius
             }
@@ -184,20 +186,10 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
             let mask = (view.layer?.mask as? CAShapeLayer) ?? CAShapeLayer()
             mask.path = ChamferedRect.appKitPath(in: view.bounds, chamfer: chamfer)
             view.layer?.mask = mask
-
-            let border = shapeBorderLayer ?? CAShapeLayer()
-            border.fillColor = nil
-            border.strokeColor = NSColor.white.withAlphaComponent(0.22).cgColor
-            border.lineWidth = 1
-            border.zPosition = 1000
-            border.path = ChamferedRect.appKitPath(
-                in: view.bounds.insetBy(dx: 0.5, dy: 0.5),
-                chamfer: chamfer
-            )
-            if shapeBorderLayer == nil {
-                view.layer?.addSublayer(border)
-                shapeBorderLayer = border
-            }
+            view.layer?.borderWidth = 0
+            view.layer?.borderColor = nil
+            shapeBorderLayer?.removeFromSuperlayer()
+            shapeBorderLayer = nil
             invalidateShadow()
         }
     }
