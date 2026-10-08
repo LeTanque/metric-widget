@@ -47,12 +47,12 @@ final class UsagePreferences {
         let openAIToStore = openaiKey.trimmingCharacters(in: .whitespacesAndNewlines)
         let anthropicToStore = anthropicKey.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if !openAIToStore.isEmpty, !KeychainStore.setPassword(openAIToStore, account: KeychainAccount.openAI) {
-            return UsageSaveResult(message: "Couldn’t save the OpenAI key to Keychain.", isError: true)
+        if !KeychainStore.setPassword(openAIToStore.isEmpty ? nil : openAIToStore, account: KeychainAccount.openAI) {
+            return UsageSaveResult(message: "Couldn’t save the OpenAI key.", isError: true)
         }
 
-        if !anthropicToStore.isEmpty, !KeychainStore.setPassword(anthropicToStore, account: KeychainAccount.anthropic) {
-            return UsageSaveResult(message: "Couldn’t save the Anthropic key to Keychain.", isError: true)
+        if !KeychainStore.setPassword(anthropicToStore.isEmpty ? nil : anthropicToStore, account: KeychainAccount.anthropic) {
+            return UsageSaveResult(message: "Couldn’t save the Anthropic key.", isError: true)
         }
 
         reload()
@@ -66,6 +66,16 @@ final class UsagePreferences {
         }
         parts.append("Refreshing usage…")
         return UsageSaveResult(message: parts.joined(separator: " "), isError: false)
+    }
+
+    func clearOpenAIKey() {
+        openaiKey = ""
+        _ = KeychainStore.setPassword(nil, account: KeychainAccount.openAI)
+    }
+
+    func clearAnthropicKey() {
+        anthropicKey = ""
+        _ = KeychainStore.setPassword(nil, account: KeychainAccount.anthropic)
     }
 
     private enum Keys {

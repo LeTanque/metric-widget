@@ -30,32 +30,28 @@ struct SettingsView: View {
 
             Section("Keys") {
                 SecureField("OpenAI Admin API key", text: $preferences.openaiKey)
-                if KeychainStore.hasPassword(account: KeychainAccount.openAI), preferences.openaiKey.isEmpty {
-                    Text("OpenAI key is saved in Keychain. Paste again only to replace it.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .onSubmit(saveKeys)
+                Button("Clear") {
+                    preferences.clearOpenAIKey()
+                    onSave()
                 }
-                Text("Needs an Admin key with api.usage.read (not a regular project key). Stored as \(KeychainStore.service) / \(KeychainAccount.openAI).")
+                Text("Paste an Admin key with api.usage.read.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 SecureField("Anthropic Admin API key", text: $preferences.anthropicKey)
-                if KeychainStore.hasPassword(account: KeychainAccount.anthropic), preferences.anthropicKey.isEmpty {
-                    Text("Anthropic key is saved in Keychain.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .onSubmit(saveKeys)
+                Button("Clear") {
+                    preferences.clearAnthropicKey()
+                    onSave()
                 }
-                Text("sk-ant-admin… Stored as \(KeychainAccount.anthropic).")
+                Text("Paste an Admin key (sk-ant-admin…).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Section {
                 Button("Save") {
-                    let result = preferences.save()
-                    saveStatus = result
-                    if !result.isError {
-                        onSave()
-                    }
+                    saveKeys()
                 }
                 .keyboardShortcut(.defaultAction)
 
@@ -82,6 +78,14 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(minWidth: 460, minHeight: 480)
         .padding()
+    }
+
+    private func saveKeys() {
+        let result = preferences.save()
+        saveStatus = result
+        if !result.isError {
+            onSave()
+        }
     }
 
     private func clockBinding(for zone: ClockTimeZoneChoice) -> Binding<Bool> {
