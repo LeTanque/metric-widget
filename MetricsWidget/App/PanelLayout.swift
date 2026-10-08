@@ -5,6 +5,7 @@ enum PanelContentMeasureMode {
     case wrapBoth
     /// Intrinsic width; height follows content (usage).
     case wrapWidthGrowHeight
+    case fillWidthGrowHeight
 }
 
 struct PanelLayout {
@@ -18,28 +19,28 @@ struct PanelLayout {
     var frameGeneration: Int = 1
 
     static let network = PanelLayout(
-        defaultSize: NSSize(width: 249, height: 128),
-        minSize: NSSize(width: 220, height: 120),
-        maxSize: NSSize(width: 390, height: 200),
+        defaultSize: NSSize(width: 249, height: 160),
+        minSize: NSSize(width: 220, height: 148),
+        maxSize: NSSize(width: 390, height: 230),
+        resizable: true,
+        sizesToContent: false,
+        frameGeneration: 4
+    )
+    static let memory = PanelLayout(
+        defaultSize: NSSize(width: 320, height: 188),
+        minSize: NSSize(width: 260, height: 150),
+        maxSize: NSSize(width: 520, height: 420),
         resizable: true,
         sizesToContent: false,
         frameGeneration: 3
     )
-    static let memory = PanelLayout(
-        defaultSize: NSSize(width: 320, height: 268),
-        minSize: NSSize(width: 260, height: 180),
-        maxSize: NSSize(width: 520, height: 420),
-        resizable: true,
-        sizesToContent: false,
-        frameGeneration: 2
-    )
     static let system = PanelLayout(
-        defaultSize: NSSize(width: 320, height: 252),
-        minSize: NSSize(width: 260, height: 180),
+        defaultSize: NSSize(width: 320, height: 200),
+        minSize: NSSize(width: 260, height: 160),
         maxSize: NSSize(width: 520, height: 400),
         resizable: true,
         sizesToContent: false,
-        frameGeneration: 2
+        frameGeneration: 3
     )
     static let combined = PanelLayout(
         defaultSize: NSSize(width: 700, height: 520),
@@ -55,7 +56,7 @@ struct PanelLayout {
         maxSize: NSSize(width: 460, height: 600),
         resizable: true,
         sizesToContent: true,
-        contentMeasureMode: .wrapWidthGrowHeight,
+        contentMeasureMode: .fillWidthGrowHeight,
         frameGeneration: 2
     )
     static let clock = PanelLayout(

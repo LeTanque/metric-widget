@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 struct NetworkPanelView: View {
@@ -11,14 +12,14 @@ struct NetworkPanelView: View {
             HStack(alignment: .top, spacing: 0) {
                 RateLabel(
                     title: "DN",
-                    value: ByteFormat.perSecond(snap.downloadBytesPerSec),
-                    peak: ByteFormat.perSecond(snap.peakDownloadBytesPerSec),
+                    bytesPerSec: snap.downloadBytesPerSec,
+                    peakBytesPerSec: snap.peakDownloadBytesPerSec,
                     indicator: ArcadeTileChrome.download
                 )
                 RateLabel(
                     title: "UP",
-                    value: ByteFormat.perSecond(snap.uploadBytesPerSec),
-                    peak: ByteFormat.perSecond(snap.peakUploadBytesPerSec),
+                    bytesPerSec: snap.uploadBytesPerSec,
+                    peakBytesPerSec: snap.peakUploadBytesPerSec,
                     indicator: ArcadeTileChrome.upload
                 )
             }
@@ -46,7 +47,7 @@ struct NetworkPanelView: View {
                 ChamferedRectangle().fill(Color.black.opacity(0.18))
             }
         }
-        .chamferedTileShape(border: embedded ? Color.white.opacity(0.22) : nil)
+        .chamferedTileShape()
         .onAppear {
             ArcadeFont.register()
         }
@@ -55,13 +56,11 @@ struct NetworkPanelView: View {
 
 private struct RateLabel: View {
     let title: String
-    let value: String
-    let peak: String
+    let bytesPerSec: Double
+    let peakBytesPerSec: Double
     let indicator: Color
 
     var body: some View {
-        let parts = Self.splitRate(value)
-        let peakParts = Self.splitRate(peak)
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 4) {
                 Text(title == "UP" ? "▲" : "▼")
@@ -71,52 +70,70 @@ private struct RateLabel: View {
                     .font(ArcadeFont.font(size: 8))
                     .foregroundStyle(ArcadeTileChrome.label)
             }
-            HStack(alignment: .center, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text(parts.number)
-                        .font(ArcadeFont.font(size: 11))
-                        .foregroundStyle(ArcadeTileChrome.value)
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                    if !parts.unit.isEmpty {
-                        Text(parts.unit)
-                            .font(ArcadeFont.font(size: 8))
-                            .foregroundStyle(ArcadeTileChrome.label)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.7)
-                    }
-                }
-                .layoutPriority(1)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("PEAK")
-                        .font(ArcadeFont.font(size: 5))
-                        .foregroundStyle(ArcadeTileChrome.label)
-                    HStack(alignment: .firstTextBaseline, spacing: 2) {
-                        Text(peakParts.number)
-                            .font(ArcadeFont.font(size: 6))
-                            .foregroundStyle(ArcadeTileChrome.value)
-                            .monospacedDigit()
-                        if !peakParts.unit.isEmpty {
-                            Text(peakParts.unit)
-                                .font(ArcadeFont.font(size: 5))
-                                .foregroundStyle(ArcadeTileChrome.label)
-                        }
-                    }
-                }
-                .layoutPriority(-1)
-                .minimumScaleFactor(0.55)
-            }
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            LEDRateValue(bytesPerSec: bytesPerSec, numberSize: 11, unitSize: 8)
+            Text("PEAK")
+                .font(ArcadeFont.font(size: 6))
+                .foregroundStyle(ArcadeTileChrome.label)
+            LEDRateValue(bytesPerSec: peakBytesPerSec, numberSize: 10, unitSize: 7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
 
-    private static func splitRate(_ raw: String) -> (number: String, unit: String) {
+private struct LEDRateValue: View {
+    let bytesPerSec: Double
+    let numberSize: CGFloat
+    let unitSize: CGFloat
+
+    var body: some View {
+        let parts = Self.rateParts(bytesPerSec)
+        let slot = Self.ledSlot(parts.number)
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            HStack(spacing: 0) {
+                ForEach(Array(slot.padded.enumerated()), id: \.offset) { index, character in
+                    Text(String(character))
+                        .font(ArcadeFont.font(size: numberSize))
+                        .foregroundStyle(
+                            index < slot.padCount
+                                ? Color.white.opacity(0.18)
+                                : ArcadeTileChrome.value
+                        )
+                        .frame(width: numberSize, alignment: .center)
+                }
+            }
+            if !parts.unit.isEmpty {
+                Text(parts.unit)
+                    .font(ArcadeFont.font(size: unitSize))
+                    .foregroundStyle(ArcadeTileChrome.label)
+                    .lineLimit(1)
+            }
+        }
+        .fixedSize(horizontal: true, vertical: true)
+    }
+
+    private static func rateParts(_ bytesPerSec: Double) -> (number: String, unit: String) {
+        let raw = ByteFormat.perSecond(bytesPerSec)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let space = trimmed.firstIndex(of: " ") else { return (trimmed, "") }
-        return (String(trimmed[..<space]), String(trimmed[trimmed.index(after: space)...]))
+        let number: String
+        let unit: String
+        if let space = trimmed.firstIndex(of: " ") {
+            number = String(trimmed[..<space])
+            unit = String(trimmed[trimmed.index(after: space)...])
+        } else {
+            number = trimmed
+            unit = ""
+        }
+        let cleaned = number.replacingOccurrences(of: ",", with: "")
+        let numeric = cleaned.unicodeScalars.allSatisfy { CharacterSet.decimalDigits.contains($0) || $0 == "." }
+        return (numeric && !cleaned.isEmpty ? cleaned : "0", unit)
+    }
+
+    private static func ledSlot(_ number: String, width: Int = 4) -> (padded: [Character], padCount: Int) {
+        if number.count >= width {
+            return (Array(number.prefix(width)), 0)
+        }
+        let padCount = width - number.count
+        return (Array(String(repeating: "0", count: padCount) + number), padCount)
     }
 }
 

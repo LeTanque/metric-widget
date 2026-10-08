@@ -79,7 +79,7 @@ struct ArcadePanelSurface<Content: View>: View {
                     ChamferedRectangle().fill(Color.black.opacity(0.18))
                 }
             }
-            .chamferedTileShape(border: embedded ? Color.white.opacity(0.22) : nil)
+            .chamferedTileShape()
             .onAppear {
                 ArcadeFont.register()
             }
@@ -192,27 +192,33 @@ struct MeterBar: View {
     let percent: Double
     let detail: String
     var remaining: Bool = false
+    var detailColor: Color = ArcadeTileChrome.value
+    var compact: Bool = false
 
     var body: some View {
         let clamped = min(max(percent, 0), 100)
         let fill = ArcadePlot.fillColor(percent: clamped, remaining: remaining)
+        let titleSize: CGFloat = compact ? 6 : 7
+        let valueSize: CGFloat = compact ? 7 : 8
 
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(title.uppercased())
-                    .font(ArcadeFont.font(size: 7))
+                    .font(ArcadeFont.font(size: titleSize))
                     .foregroundStyle(ArcadeTileChrome.label)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .truncationMode(.tail)
                 Spacer(minLength: 6)
                 if !detail.isEmpty {
                     Text(detail)
-                        .font(ArcadeFont.font(size: 7))
-                        .foregroundStyle(ArcadeTileChrome.value)
+                        .font(ArcadeFont.font(size: titleSize))
+                        .foregroundStyle(detailColor)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.6)
+                        .truncationMode(.tail)
+                        .layoutPriority(-1)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             HStack(alignment: .center, spacing: 6) {
                 Canvas { context, size in
                     ArcadePlot.drawBackground(context: &context, size: size, rows: 3, ticks: 8)
@@ -230,13 +236,14 @@ struct MeterBar: View {
                 .frame(height: 16)
 
                 Text("\(Int(clamped.rounded()))%")
-                    .font(ArcadeFont.font(size: 8))
+                    .font(ArcadeFont.font(size: valueSize))
                     .foregroundStyle(ArcadeTileChrome.value)
                     .monospacedDigit()
                     .frame(minWidth: 28, alignment: .trailing)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .truncationMode(.tail)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

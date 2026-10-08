@@ -36,6 +36,8 @@ private struct ReportPanelSize: ViewModifier {
             content.fixedSize(horizontal: true, vertical: true)
         case .wrapWidthGrowHeight:
             content.fixedSize(horizontal: true, vertical: false)
+        case .fillWidthGrowHeight:
+            content.fixedSize(horizontal: false, vertical: true)
         }
     }
 }
