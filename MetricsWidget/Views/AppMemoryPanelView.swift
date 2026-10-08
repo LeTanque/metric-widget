@@ -10,7 +10,13 @@ struct AppMemoryPanelView: View {
         let rows = Array(snap.processes.prefix(rowLimit))
         ArcadePanelSurface(embedded: embedded) {
             VStack(alignment: .leading, spacing: 8) {
-                ArcadeLabeledRow(label: "Top RSS", value: ByteFormat.bytes(snap.processMemoryTotal))
+                SectionHeaderBand(inset: ArcadePanelSurface.inset(embedded: embedded)) {
+                    ArcadeLabeledRow(
+                        label: "Top RSS",
+                        value: ByteFormat.bytes(snap.processMemoryTotal),
+                        labelColor: ArcadeTileChrome.value
+                    )
+                }
 
                 if rows.isEmpty {
                     Text("COLLECTING…")

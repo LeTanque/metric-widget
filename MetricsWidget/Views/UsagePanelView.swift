@@ -14,7 +14,10 @@ struct UsagePanelView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     ForEach(store.snapshot.providers) { provider in
-                        ProviderUsageBlock(provider: provider)
+                        ProviderUsageBlock(
+                            provider: provider,
+                            inset: ArcadePanelSurface.inset(embedded: embedded)
+                        )
                     }
                 }
                 if let updated = store.snapshot.lastUpdated {
@@ -31,17 +34,20 @@ struct UsagePanelView: View {
 
 private struct ProviderUsageBlock: View {
     let provider: ProviderUsage
+    var inset: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            ArcadeFittingPair(showsValue: !provider.resetLabel.isEmpty) {
-                Text(provider.title.uppercased())
-                    .font(ArcadeFont.font(size: 7))
-                    .foregroundStyle(ArcadeTileChrome.value)
-            } value: {
-                Text(provider.resetLabel.uppercased())
-                    .font(ArcadeFont.font(size: 5))
-                    .foregroundStyle(ArcadeTileChrome.label)
+            SectionHeaderBand(inset: inset) {
+                ArcadeFittingPair(showsValue: !provider.resetLabel.isEmpty) {
+                    Text(provider.title.uppercased())
+                        .font(ArcadeFont.font(size: 7))
+                        .foregroundStyle(ArcadeTileChrome.value)
+                } value: {
+                    Text(provider.resetLabel.uppercased())
+                        .font(ArcadeFont.font(size: 5))
+                        .foregroundStyle(ArcadeTileChrome.label)
+                }
             }
             Text(provider.subtitle.uppercased())
                 .font(ArcadeFont.font(size: 5))

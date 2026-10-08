@@ -65,8 +65,12 @@ struct ArcadePanelSurface<Content: View>: View {
     var fillAvailableHeight: Bool = true
     @ViewBuilder var content: Content
 
+    static func inset(embedded: Bool) -> CGFloat {
+        embedded ? 8 : 10
+    }
+
     var body: some View {
-        let pad: CGFloat = embedded ? 8 : 10
+        let pad = Self.inset(embedded: embedded)
         content
             .padding(pad)
             .frame(
@@ -116,16 +120,32 @@ struct ArcadeFittingPair<Label: View, Value: View>: View {
     }
 }
 
+struct SectionHeaderBand<Content: View>: View {
+    var inset: CGFloat
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .padding(.vertical, 4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                ArcadeTileChrome.plotFill
+                    .padding(.horizontal, -inset)
+            }
+    }
+}
+
 struct ArcadeLabeledRow: View {
     let label: String
     let value: String
     var valueColor: Color = ArcadeTileChrome.value
+    var labelColor: Color = ArcadeTileChrome.label
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Text(label.uppercased())
                 .font(ArcadeFont.font(size: 7))
-                .foregroundStyle(ArcadeTileChrome.label)
+                .foregroundStyle(labelColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
             Spacer(minLength: 6)
