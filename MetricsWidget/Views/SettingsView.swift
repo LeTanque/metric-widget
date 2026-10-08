@@ -29,7 +29,7 @@ struct SettingsView: View {
             }
 
             Section("Keys") {
-                TextField("OpenAI Admin API key", text: $preferences.openaiKey)
+                SecureField("OpenAI Admin API key", text: $preferences.openaiKey)
                     .onSubmit(saveKeys)
                 Button("Clear") {
                     preferences.clearOpenAIKey()
@@ -38,7 +38,7 @@ struct SettingsView: View {
                 Text("Paste an Admin key with api.usage.read.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                TextField("Anthropic Admin API key", text: $preferences.anthropicKey)
+                SecureField("Anthropic Admin API key", text: $preferences.anthropicKey)
                     .onSubmit(saveKeys)
                 Button("Clear") {
                     preferences.clearAnthropicKey()
