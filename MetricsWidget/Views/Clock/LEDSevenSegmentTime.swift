@@ -100,7 +100,7 @@ private struct LEDColon: View {
         GeometryReader { geo in
             let base = min(geo.size.width, geo.size.height)
             let dot = max(base * 0.22, 4)
-            let fill = lit ? color : color.opacity(0.07)
+            let fill = lit ? color : ClockLEDChrome.off(color)
             VStack(spacing: geo.size.height * 0.18) {
                 Circle().fill(fill).frame(width: dot, height: dot)
                 Circle().fill(fill).frame(width: dot, height: dot)
@@ -148,7 +148,7 @@ private struct LEDDigit: View {
 
     @ViewBuilder
     private func segment(_ kind: SegmentKind, w: CGFloat, h: CGFloat, t: CGFloat, gap: CGFloat, on: Bool) -> some View {
-        let fill = on ? color : color.opacity(0.07)
+        let fill = on ? color : ClockLEDChrome.off(color)
         let glow = on ? color.opacity(0.55) : .clear
         switch kind {
         case .top:

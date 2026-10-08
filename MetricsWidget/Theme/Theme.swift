@@ -34,6 +34,7 @@ struct ThemePalette {
     var segmentOff: Color
     var segmentGlow: Bool
     var clockLED: Color
+    var clockLEDOff: Color { clockLED.opacity(ClockLEDChrome.offOpacity) }
     var glassTint: NSColor?
     /// Extra-dark smoked glass for clock panels (black at lower opacity).
     var clockGlassTint: NSColor
@@ -86,6 +87,14 @@ struct ThemePalette {
         clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.32),
         glassMaterial: .underWindowBackground
     )
+}
+
+enum ClockLEDChrome {
+    static let offOpacity: Double = 0.07
+
+    static func off(_ on: Color) -> Color {
+        on.opacity(offOpacity)
+    }
 }
 
 @MainActor

@@ -48,7 +48,7 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         layout: PanelLayout,
         themeStore: ThemeStore,
         shape: PanelWindowShape = .rounded(20),
-        clockGlass: Bool = false,
+        clockGlass: Bool = true,
         rootView: Content
     ) {
         self.panelID = id
