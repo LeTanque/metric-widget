@@ -134,6 +134,7 @@ struct ArcadeFittingPair<Label: View, Value: View>: View {
 
 struct SectionHeaderBand<Content: View>: View {
     var inset: CGFloat
+    var flushTop: Bool = false
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -143,6 +144,7 @@ struct SectionHeaderBand<Content: View>: View {
             .background {
                 ArcadeTileChrome.plotFill
                     .padding(.horizontal, -inset)
+                    .padding(.top, flushTop ? -inset : 0)
             }
     }
 }

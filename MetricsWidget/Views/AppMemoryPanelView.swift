@@ -10,7 +10,7 @@ struct AppMemoryPanelView: View {
         let rows = Array(snap.processes.prefix(rowLimit))
         ArcadePanelSurface(embedded: embedded) {
             VStack(alignment: .leading, spacing: 8) {
-                SectionHeaderBand(inset: ArcadePanelMetrics.inset(embedded: embedded)) {
+                SectionHeaderBand(inset: ArcadePanelMetrics.inset(embedded: embedded), flushTop: true) {
                     ArcadeLabeledRow(
                         label: "Top RSS",
                         value: ByteFormat.bytes(snap.processMemoryTotal),

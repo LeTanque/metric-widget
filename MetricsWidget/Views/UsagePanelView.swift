@@ -16,7 +16,8 @@ struct UsagePanelView: View {
                     ForEach(store.snapshot.providers) { provider in
                         ProviderUsageBlock(
                             provider: provider,
-                            inset: ArcadePanelMetrics.inset(embedded: embedded)
+                            inset: ArcadePanelMetrics.inset(embedded: embedded),
+                            flushTop: provider.id == store.snapshot.providers.first?.id
                         )
                     }
                 }
@@ -35,10 +36,11 @@ struct UsagePanelView: View {
 private struct ProviderUsageBlock: View {
     let provider: ProviderUsage
     var inset: CGFloat
+    var flushTop: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            SectionHeaderBand(inset: inset) {
+            SectionHeaderBand(inset: inset, flushTop: flushTop) {
                 ArcadeFittingPair(showsValue: !provider.resetLabel.isEmpty) {
                     Text(provider.title.uppercased())
                         .font(ArcadeFont.font(size: 7))
