@@ -15,13 +15,15 @@ struct PanelLayout {
     /// Grow (and optionally shrink when not user-resized) to SwiftUI content measurements.
     var sizesToContent: Bool
     var contentMeasureMode: PanelContentMeasureMode = .wrapBoth
+    var frameGeneration: Int = 1
 
     static let network = PanelLayout(
-        defaultSize: NSSize(width: 332, height: 228),
-        minSize: NSSize(width: 260, height: 160),
-        maxSize: NSSize(width: 520, height: 400),
+        defaultSize: NSSize(width: 332, height: 114),
+        minSize: NSSize(width: 260, height: 80),
+        maxSize: NSSize(width: 520, height: 190),
         resizable: true,
-        sizesToContent: false
+        sizesToContent: false,
+        frameGeneration: 2
     )
     static let memory = PanelLayout(
         defaultSize: NSSize(width: 292, height: 268),

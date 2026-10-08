@@ -17,6 +17,9 @@ let package = Package(
                 "Info.plist",
                 "MetricsWidget.entitlements",
                 "Assets.xcassets"
+            ],
+            resources: [
+                .copy("Resources/Fonts/PressStart2P-Regular.ttf")
             ]
         )
     ]
