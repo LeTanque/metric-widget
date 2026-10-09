@@ -33,21 +33,23 @@ enum OpenAIUsageClient {
         if http.statusCode == 401 || http.statusCode == 403 {
             return errorUsage("Need an Admin key with api.usage.read")
         }
-        guard (200..<300).contains(http.statusCode),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let buckets = json["data"] as? [[String: Any]] else {
+        guard (200..<300).contains(http.statusCode) else {
             return errorUsage("OpenAI usage request failed (\(http.statusCode))")
         }
 
+        // JSONDecoder, not JSONSerialization: OpenAI sends zero-cost days as `0E-6176`,
+        // which JSONSerialization rejects as NaN.
+        let page: CostsPage
+        do {
+            page = try JSONDecoder().decode(CostsPage.self, from: data)
+        } catch {
+            return errorUsage("Couldn’t read OpenAI costs response (\(decodeReason(error)))")
+        }
+
         var total = 0.0
-        for bucket in buckets {
-            guard let results = bucket["results"] as? [[String: Any]] else { continue }
-            for row in results {
-                if let amount = row["amount"] as? [String: Any], let value = amount["value"] as? Double {
-                    total += value
-                } else if let amount = row["amount"] as? [String: Any], let value = amount["value"] as? NSNumber {
-                    total += value.doubleValue
-                }
+        for bucket in page.data {
+            for row in bucket.results ?? [] {
+                total += row.amount?.value ?? 0
             }
         }
 
@@ -74,6 +76,27 @@ enum OpenAIUsageClient {
             footnote: hasBudget ? nil : "Set a monthly budget in Settings to show a bar",
             meterTitle: hasBudget ? "Budget remaining" : nil
         )
+    }
+
+    private struct CostsPage: Decodable {
+        struct Bucket: Decodable {
+            struct Result: Decodable {
+                struct Amount: Decodable { let value: Double? }
+                let amount: Amount?
+            }
+            let results: [Result]?
+        }
+        let data: [Bucket]
+    }
+
+    private static func decodeReason(_ error: Error) -> String {
+        switch error {
+        case DecodingError.dataCorrupted: return "invalid JSON"
+        case DecodingError.keyNotFound(let key, _): return "missing \(key.stringValue)"
+        case DecodingError.typeMismatch(_, let context), DecodingError.valueNotFound(_, let context):
+            return "unexpected \(context.codingPath.map(\.stringValue).joined(separator: "."))"
+        default: return "decode error"
+        }
     }
 
     private static func errorUsage(_ message: String) -> ProviderUsage {
