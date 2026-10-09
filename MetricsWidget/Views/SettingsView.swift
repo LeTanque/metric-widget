@@ -9,7 +9,7 @@ struct SettingsView: View {
     var onClockPreferencesChanged: () -> Void
 
     @State private var saveStatus: UsageSaveResult?
-    @State private var selectedSection: SettingsSection = .appMemory
+    @State private var selectedSection: SettingsSection = .general
 
     var body: some View {
         VStack(spacing: 0) {
@@ -31,8 +31,10 @@ struct SettingsView: View {
     @ViewBuilder
     private var sectionContent: some View {
         switch selectedSection {
+        case .general:
+            generalTab
         case .appMemory:
-            appMemoryTab
+            enableOnlyTab(isOn: $panels.showMemory)
         case .clock:
             clockTab
         case .network:
@@ -44,12 +46,14 @@ struct SettingsView: View {
         }
     }
 
-    private var appMemoryTab: some View {
+    private var generalTab: some View {
         Form {
-            Section {
-                Toggle("Enable", isOn: $panels.showMemory)
-            }
             Section("Theme") {
+                Picker("Theme", selection: $panels.themeID) {
+                    ForEach(ThemeID.allCases) { theme in
+                        Text(theme.menuTitle).tag(theme)
+                    }
+                }
                 Button("Choose Picture…") {
                     panels.chooseCustomBackground()
                 }
@@ -174,6 +178,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsSection: String, CaseIterable, Identifiable {
+    case general = "General"
     case appMemory = "App Memory"
     case clock = "Clock"
     case network = "Network"
