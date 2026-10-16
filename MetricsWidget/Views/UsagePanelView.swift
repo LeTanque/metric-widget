@@ -20,7 +20,9 @@ struct UsagePanelView: View {
                         ProviderUsageBlock(
                             provider: provider,
                             inset: ArcadePanelMetrics.inset(embedded: embedded),
-                            flushTop: provider.id == store.snapshot.providers.first?.id
+                            flushTop: provider.id == store.snapshot.providers.first?.id,
+                            updated: ProviderUsageBlock.showsOwnUpdated(provider.id)
+                                ? store.lastSuccess[provider.id] : nil
                         )
                     }
                 }
@@ -40,9 +42,13 @@ struct UsagePanelView: View {
 }
 
 private struct ProviderUsageBlock: View {
+    static func showsOwnUpdated(_ id: String) -> Bool { id == "cursor" || id == "grokbot" }
+
     let provider: ProviderUsage
     var inset: CGFloat
     var flushTop: Bool
+    /// Last successful fetch for providers that show their own UPDATED line (Cursor, Grok Bot).
+    var updated: Date? = nil
     @Environment(ThemeStore.self) private var themes
 
     var body: some View {
@@ -77,7 +83,8 @@ private struct ProviderUsageBlock: View {
                         detail: provider.detail,
                         remaining: true,
                         compact: true,
-                        wrapWhenTight: true
+                        wrapWhenTight: true,
+                        usageThreshold: true
                     )
                 } else {
                     Text(provider.detail)
@@ -94,7 +101,8 @@ private struct ProviderUsageBlock: View {
                                 percent: line.percentUsed,
                                 detail: "",
                                 compact: true,
-                                wrapWhenTight: true
+                                wrapWhenTight: true,
+                                usageThreshold: true
                             )
                         }
                     }
@@ -108,6 +116,14 @@ private struct ProviderUsageBlock: View {
                         .padding(.top, 2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+            if let updated {
+                // Same style as the OpenAI "UPDATED" line at the bottom of the tile.
+                Text("UPDATED \(updated.formatted(date: .omitted, time: .shortened))")
+                    .font(ArcadeFont.font(size: 5))
+                    .foregroundStyle(chrome.label)
+                    .padding(.top, 7)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

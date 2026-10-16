@@ -64,6 +64,21 @@ enum ArcadePlot {
         }
         return percent >= 80 ? chrome.warning : chrome.accent
     }
+
+    /// Usage-tile threshold: standard bar color from 100% down to 16% remaining,
+    /// the theme's warning color from 15% down to 0% remaining.
+    static let usageAlertRemainingPercent: Double = 15
+
+    static func usageIsAlert(remainingPercent: Double) -> Bool {
+        remainingPercent.rounded() <= usageAlertRemainingPercent
+    }
+
+    /// Fill for Usage-tile bars. `percent` is what the bar shows; `remaining` says whether
+    /// that number is remaining (true) or used (false, converted to 100 - used).
+    static func usageFillColor(percent: Double, remaining: Bool, chrome: ArcadeChrome = .standard) -> Color {
+        let left = remaining ? percent : 100 - percent
+        return usageIsAlert(remainingPercent: left) ? chrome.warning : chrome.accent
+    }
 }
 
 struct ArcadePanelSurface<Content: View>: View {
@@ -272,12 +287,16 @@ struct MeterBar: View {
     var detailColor: Color? = nil
     var compact: Bool = false
     var wrapWhenTight: Bool = false
+    /// Usage tile: alert only when 15% or less remains.
+    var usageThreshold: Bool = false
     @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let chrome = themes.palette.arcade
         let clamped = min(max(percent, 0), 100)
-        let fill = ArcadePlot.fillColor(percent: clamped, remaining: remaining, chrome: chrome)
+        let fill = usageThreshold
+            ? ArcadePlot.usageFillColor(percent: clamped, remaining: remaining, chrome: chrome)
+            : ArcadePlot.fillColor(percent: clamped, remaining: remaining, chrome: chrome)
         let titleSize: CGFloat = compact ? 6 : 7
         let valueSize: CGFloat = compact ? 7 : 8
 

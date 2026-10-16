@@ -5,6 +5,8 @@ import Observation
 @Observable
 final class UsageStore {
     private(set) var snapshot = UsageSnapshot.empty
+    /// Time of each provider's last successful (error-free, configured) fetch, by provider id.
+    private(set) var lastSuccess: [String: Date] = [:]
     var isActive = false {
         didSet { syncTimer() }
     }
@@ -57,6 +59,11 @@ final class UsageStore {
             let next = UsageSampler.sample(preferences: snapshot)
             DispatchQueue.main.async {
                 self.snapshot = next
+                if let stamp = next.lastUpdated {
+                    for provider in next.providers where provider.error == nil && provider.subtitle != "Not configured" {
+                        self.lastSuccess[provider.id] = stamp
+                    }
+                }
                 self.inflight = false
                 if self.refreshQueued {
                     self.tick()
