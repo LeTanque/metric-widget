@@ -96,14 +96,22 @@ private struct ProviderUsageBlock: View {
                 if !provider.quotaLines.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(provider.quotaLines, id: \.self) { line in
-                            MeterBar(
-                                title: line.label,
-                                percent: line.percentUsed,
-                                detail: "",
-                                compact: true,
-                                wrapWhenTight: true,
-                                usageThreshold: true
-                            )
+                            VStack(alignment: .leading, spacing: 3) {
+                                // Section name (subtitle style) keeps Cursor Models / Other Models distinct.
+                                Text(line.label.uppercased())
+                                    .font(ArcadeFont.font(size: 5))
+                                    .foregroundStyle(chrome.label)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                MeterBar(
+                                    title: "Included spend remaining",
+                                    percent: line.percentRemaining,
+                                    detail: "",
+                                    remaining: true,
+                                    compact: true,
+                                    wrapWhenTight: true,
+                                    usageThreshold: true
+                                )
+                            }
                         }
                     }
                     .padding(.top, 4)

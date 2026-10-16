@@ -73,11 +73,9 @@ enum ArcadePlot {
         remainingPercent.rounded() <= usageAlertRemainingPercent
     }
 
-    /// Fill for Usage-tile bars. `percent` is what the bar shows; `remaining` says whether
-    /// that number is remaining (true) or used (false, converted to 100 - used).
-    static func usageFillColor(percent: Double, remaining: Bool, chrome: ArcadeChrome = .standard) -> Color {
-        let left = remaining ? percent : 100 - percent
-        return usageIsAlert(remainingPercent: left) ? chrome.warning : chrome.accent
+    /// Fill for Usage-tile bars; `remainingPercent` is the remaining value the bar shows.
+    static func usageFillColor(remainingPercent: Double, chrome: ArcadeChrome = .standard) -> Color {
+        usageIsAlert(remainingPercent: remainingPercent) ? chrome.warning : chrome.accent
     }
 }
 
@@ -295,7 +293,7 @@ struct MeterBar: View {
         let chrome = themes.palette.arcade
         let clamped = min(max(percent, 0), 100)
         let fill = usageThreshold
-            ? ArcadePlot.usageFillColor(percent: clamped, remaining: remaining, chrome: chrome)
+            ? ArcadePlot.usageFillColor(remainingPercent: clamped, chrome: chrome)
             : ArcadePlot.fillColor(percent: clamped, remaining: remaining, chrome: chrome)
         let titleSize: CGFloat = compact ? 6 : 7
         let valueSize: CGFloat = compact ? 7 : 8

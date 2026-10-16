@@ -4,6 +4,8 @@ import Foundation
 struct UsageQuotaLine: Sendable, Hashable {
     var label: String
     var percentUsed: Double
+    /// What the Usage tile shows: 100 - used, clamped to 0...100.
+    var percentRemaining: Double { min(max(100 - percentUsed, 0), 100) }
 }
 
 struct ProviderUsage: Identifiable, Sendable, Hashable {
