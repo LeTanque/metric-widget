@@ -7,6 +7,7 @@ enum ThemeID: String, CaseIterable, Identifiable {
     case matrix
     case graffiti
     case dark
+    case darker
     case light
     case custom
 
@@ -18,6 +19,7 @@ enum ThemeID: String, CaseIterable, Identifiable {
         case .matrix: "Matrix"
         case .graffiti: "Graffiti"
         case .dark: "Dark"
+        case .darker: "Darker"
         case .light: "Light"
         case .custom: "Custom"
         }
@@ -32,10 +34,17 @@ enum ThemeID: String, CaseIterable, Identifiable {
 /// `.dark` = white ink for dark pictures, `.light` = dark ink for light pictures.
 enum CustomColorTheme: String, CaseIterable, Identifiable {
     case dark
+    case darker
     case light
 
     var id: String { rawValue }
-    var menuTitle: String { self == .dark ? "Dark" : "Light" }
+    var menuTitle: String {
+        switch self {
+        case .dark: "Dark"
+        case .darker: "Darker"
+        case .light: "Light"
+        }
+    }
 }
 
 struct ArcadeChrome: Equatable, Sendable {
@@ -96,6 +105,20 @@ struct ArcadeChrome: Equatable, Sendable {
         headerTitle: Color.white,
         headerLabel: Color(white: 0.72)
     )
+
+    /// Darker: Dark's white ink, but red bars/network and dark-gray title bands.
+    /// Bar red = the Dark gauge-ring red (lightInk.warning); alert is a deeper red.
+    static let darkerInk: ArcadeChrome = {
+        var c = ArcadeChrome.lightInk
+        c.accent = Color(red: 1.0, green: 0.36, blue: 0.36)
+        c.download = Color(red: 1.0, green: 0.36, blue: 0.36)
+        c.upload = Color(red: 1.0, green: 0.66, blue: 0.60)
+        c.warning = Color(red: 0.58, green: 0.03, blue: 0.07)
+        c.headerFill = Color(white: 0.22)
+        c.headerTitle = Color.white
+        c.headerLabel = Color(white: 0.72)
+        return c
+    }()
 
     /// Light ink for dark backgrounds; title bands inverted to white with black text.
     static let lightInk = ArcadeChrome(
@@ -253,7 +276,7 @@ extension ThemePalette {
     }
 
     /// Light ink (for dark pictures / the Light theme): white glowing LEDs, white text.
-    static func lightInk(glassTint: NSColor?, clockGlassTint: NSColor) -> ThemePalette {
+    static func lightInk(glassTint: NSColor?, clockGlassTint: NSColor, arcade: ArcadeChrome = .lightInk) -> ThemePalette {
         let led = Color.white
         return ThemePalette(
             titleFont: .caption.weight(.semibold),
@@ -264,11 +287,11 @@ extension ThemePalette {
             primary: Color.white,
             secondary: Color.white.opacity(0.8),
             tertiary: Color.white.opacity(0.5),
-            accent: ArcadeChrome.lightInk.accent,
+            accent: arcade.accent,
             track: Color.black.opacity(0.45),
-            down: ArcadeChrome.lightInk.download,
-            up: ArcadeChrome.lightInk.upload,
-            warning: ArcadeChrome.lightInk.warning,
+            down: arcade.download,
+            up: arcade.upload,
+            warning: arcade.warning,
             barLabel: Color.white,
             segmentOn: led,
             segmentOff: led.opacity(inkLEDOffOpacity),
@@ -276,7 +299,7 @@ extension ThemePalette {
             clockLED: led,
             clockLEDOffColor: led.opacity(inkLEDOffOpacity),
             glassTint: glassTint,
-            arcade: .lightInk,
+            arcade: arcade,
             clockGlassTint: clockGlassTint,
             glassMaterial: .underWindowBackground
         )
@@ -284,10 +307,13 @@ extension ThemePalette {
 
     static let customDarkInk = darkInk(glassTint: NSColor(calibratedWhite: 1, alpha: 0.35), clockGlassTint: NSColor(calibratedWhite: 1, alpha: 0.35))
     static let customLightInk = lightInk(glassTint: NSColor(calibratedWhite: 0, alpha: 0.55), clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.55))
+    static let customDarkerInk = lightInk(glassTint: NSColor(calibratedWhite: 0, alpha: 0.55), clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.55), arcade: .darkerInk)
     /// Standalone Light theme: dark ink on a plain light-gray panel.
     static let lightPanelTheme = darkInk(glassTint: NSColor(calibratedWhite: 0.93, alpha: 0.9), clockGlassTint: NSColor(calibratedWhite: 0.93, alpha: 0.85))
     /// Standalone Dark theme: light ink on a plain near-black panel.
     static let darkPanelTheme = lightInk(glassTint: NSColor(calibratedWhite: 0.06, alpha: 0.88), clockGlassTint: NSColor(calibratedWhite: 0.06, alpha: 0.8))
+    /// Standalone Darker theme: Dark's panel and ink with red bars and gray title bands.
+    static let darkerPanelTheme = lightInk(glassTint: NSColor(calibratedWhite: 0.06, alpha: 0.88), clockGlassTint: NSColor(calibratedWhite: 0.06, alpha: 0.8), arcade: .darkerInk)
 }
 
 enum ClockLEDChrome {
@@ -323,8 +349,14 @@ final class ThemeStore {
         case .matrix: .matrix
         case .graffiti: .graffiti
         case .dark: .darkPanelTheme
+        case .darker: .darkerPanelTheme
         case .light: .lightPanelTheme
-        case .custom: customColorTheme == .dark ? .customLightInk : .customDarkInk
+        case .custom:
+            switch customColorTheme {
+            case .dark: .customLightInk
+            case .darker: .customDarkerInk
+            case .light: .customDarkInk
+            }
         }
     }
 
