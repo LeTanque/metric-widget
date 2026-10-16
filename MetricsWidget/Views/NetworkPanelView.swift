@@ -16,7 +16,8 @@ struct NetworkPanelView: View {
                     title: "DN",
                     bytesPerSec: snap.downloadBytesPerSec,
                     peakBytesPerSec: snap.peakDownloadBytesPerSec,
-                    indicator: chrome.download
+                    indicator: chrome.download,
+                    liveNumberSlotWidth: 5
                 )
                 Spacer(minLength: 8)
                 RateLabel(
@@ -64,6 +65,7 @@ private struct RateLabel: View {
     let peakBytesPerSec: Double
     let indicator: Color
     var alignment: HorizontalAlignment = .leading
+    var liveNumberSlotWidth: Int = 4
     @Environment(ThemeStore.self) private var themes
 
     var body: some View {
@@ -76,11 +78,16 @@ private struct RateLabel: View {
                     .font(ArcadeFont.font(size: 8))
                     .foregroundStyle(themes.palette.arcade.label)
             }
-            LEDRateValue(bytesPerSec: bytesPerSec, numberSize: 11, unitSize: 8)
+            LEDRateValue(
+                bytesPerSec: bytesPerSec,
+                numberSize: 11,
+                unitSize: 8,
+                numberSlotWidth: liveNumberSlotWidth
+            )
             Text("PEAK")
                 .font(ArcadeFont.font(size: 6))
                 .foregroundStyle(themes.palette.arcade.label)
-            LEDRateValue(bytesPerSec: peakBytesPerSec, numberSize: 10, unitSize: 7)
+            LEDRateValue(bytesPerSec: peakBytesPerSec, numberSize: 10, unitSize: 7, numberSlotWidth: 5)
         }
     }
 }
@@ -89,11 +96,13 @@ private struct LEDRateValue: View {
     let bytesPerSec: Double
     let numberSize: CGFloat
     let unitSize: CGFloat
+    /// Fixed-width LED slots for the numeric portion (decimal counts as one slot).
+    var numberSlotWidth: Int = 4
     @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         let parts = Self.rateParts(bytesPerSec)
-        let slot = Self.ledSlot(parts.number)
+        let slot = Self.ledSlot(parts.number, width: numberSlotWidth)
         let on = themes.palette.clockLED
         let off = themes.palette.clockLEDOff
         HStack(alignment: .firstTextBaseline, spacing: 4) {
