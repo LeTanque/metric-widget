@@ -19,7 +19,9 @@ built_app="$derived/Build/Products/Release/${app_name}.app"
 rm -rf "$build_dir/${app_name}.app"
 ditto "$built_app" "$build_dir/${app_name}.app"
 xattr -cr "$build_dir/${app_name}.app"
-codesign --force --sign - "$build_dir/${app_name}.app" 2>/dev/null || true
+source "$project_dir/scripts/sign_identity.sh"
+codesign --force --deep --sign "$MW_SIGN_IDENTITY_RESOLVED" "$build_dir/${app_name}.app"
+codesign --verify --deep --strict "$build_dir/${app_name}.app"
 
 echo "Built $build_dir/${app_name}.app"
 echo "Install: ditto \"$build_dir/${app_name}.app\" /Applications/${app_name}.app"

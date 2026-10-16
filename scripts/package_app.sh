@@ -102,7 +102,8 @@ if command -v iconutil >/dev/null 2>&1; then
   rm -rf "$ICONSET"
 fi
 
-codesign --force --deep -s - "$APP_ROOT"
+source "$ROOT/scripts/sign_identity.sh"
+codesign --force --deep -s "$MW_SIGN_IDENTITY_RESOLVED" "$APP_ROOT"
 codesign --verify --deep --strict "$APP_ROOT"
 
 ZIP="$ROOT/build/MetricsWidget-${VERSION}.zip"

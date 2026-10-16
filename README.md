@@ -58,6 +58,26 @@ swift build -c debug --product MetricsWidget
 
 Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcode project). Requires macOS 15+.
 
+## Code signing
+
+Both `./build.sh` and `scripts/package_app.sh` sign with a stable identity when one is available, so macOS Keychain "Always Allow" grants survive rebuilds (ad-hoc signatures change every build and re-prompt).
+
+- Default: the `MetricsWidget Local Signing` identity if it's in your login keychain; otherwise ad-hoc (`-`).
+- Override: `MW_SIGN_IDENTITY="Apple Development: …" ./build.sh`, or `MW_SIGN_IDENTITY=- ./build.sh` to force ad-hoc.
+- Create the local identity once (self-signed, code-signing EKU; keep keys out of the repo):
+
+```sh
+mkdir -p ~/.metricswidget-signing && chmod 700 ~/.metricswidget-signing && cd ~/.metricswidget-signing
+printf '[req]\ndistinguished_name=dn\nx509_extensions=ext\nprompt=no\n[dn]\nCN=MetricsWidget Local Signing\n[ext]\nbasicConstraints=critical,CA:false\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=critical,codeSigning\n' > cert.cnf
+/usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 3650 -config cert.cnf
+PW=$(/usr/bin/openssl rand -hex 16)
+/usr/bin/openssl pkcs12 -export -inkey key.pem -in cert.pem -out mw.p12 -passout pass:$PW
+security import mw.p12 -k ~/Library/Keychains/login.keychain-db -P "$PW" -T /usr/bin/codesign
+rm -f key.pem mw.p12; unset PW
+```
+
+`security find-identity -p codesigning` lists it as `CSSMERR_TP_NOT_TRUSTED`; that's expected for a self-signed cert and doesn't stop local signing. Check a build with `codesign -dvvv build/MetricsWidget.app` (look for `Authority=MetricsWidget Local Signing`) and `codesign --verify --deep --strict build/MetricsWidget.app`.
+
 ## Usage tile
 
 Menu bar → **Usage** and **Settings…**. Enable Cursor, Grok Bot, and/or OpenAI (Anthropic is optional).
