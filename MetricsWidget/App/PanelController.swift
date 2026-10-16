@@ -8,6 +8,7 @@ import SwiftUI
 final class PanelController {
     let store = MetricsStore()
     let usageStore = UsageStore()
+    let providerStatus = ProviderStatusStore()
     let usagePreferences = UsagePreferences()
     let clockPreferences = ClockPreferences()
     let themeStore = ThemeStore()
@@ -146,7 +147,7 @@ final class PanelController {
                     layout: .usage,
                     themeStore: themeStore,
                     shape: .chamferedBottomRight(ChamferedRect.defaultChamfer),
-                    rootView: UsagePanelView(store: usageStore)
+                    rootView: UsagePanelView(store: usageStore, status: providerStatus)
                 )
             }
             usagePanel?.orderFrontRegardless()
@@ -158,6 +159,7 @@ final class PanelController {
 
         store.isActive = showNetwork || showMemory || showSystem
         usageStore.isActive = showUsage
+        providerStatus.isActive = showUsage
         applyThemeToWindows()
     }
 
@@ -226,6 +228,7 @@ final class PanelController {
             clockPreferences: clockPreferences
         ) { [weak self] in
             self?.usageStore.refreshNow()
+            self?.providerStatus.refreshEnabled()
         } onClockPreferencesChanged: { [weak self] in
             self?.refreshClockPanels()
         }

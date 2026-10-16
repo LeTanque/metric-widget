@@ -113,6 +113,13 @@ struct SettingsView: View {
                 Toggle("Anthropic", isOn: $preferences.anthropicEnabled)
             }
 
+            Section("Status") {
+                Toggle("Show service status", isOn: Bindable(panels.providerStatus).enabled)
+                Text("Display status for enabled provider.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Keys") {
                 SecureField("OpenAI Admin API key", text: $preferences.openaiKey)
                     .onSubmit(saveKeys)

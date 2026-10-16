@@ -2,6 +2,7 @@ import SwiftUI
 
 struct UsagePanelView: View {
     var store: UsageStore
+    var status: ProviderStatusStore? = nil
     var embedded: Bool = false
     @Environment(ThemeStore.self) private var themes
 
@@ -28,6 +29,9 @@ struct UsagePanelView: View {
                         .font(ArcadeFont.font(size: 5))
                         .foregroundStyle(chrome.label)
                         .fixedSize(horizontal: false, vertical: true)
+                }
+                if let status, status.enabled, !status.lines.isEmpty {
+                    ProviderStatusSection(status: status, inset: ArcadePanelMetrics.inset(embedded: embedded))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
