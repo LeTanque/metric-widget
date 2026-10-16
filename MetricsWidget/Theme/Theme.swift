@@ -28,8 +28,8 @@ enum ThemeID: String, CaseIterable, Identifiable {
     }
 }
 
-/// Ink for the Custom theme. Named for the ink, not the picture:
-/// `.dark` = dark ink for light pictures, `.light` = light ink for dark pictures.
+/// Custom theme color mode, named for the BACKGROUND it suits:
+/// `.dark` = white ink for dark pictures, `.light` = dark ink for light pictures.
 enum CustomColorTheme: String, CaseIterable, Identifiable {
     case dark
     case light
@@ -204,10 +204,10 @@ struct ThemePalette {
         up: Color(red: 196.0 / 255.0, green: 138.0 / 255.0, blue: 232.0 / 255.0),
         warning: Color(red: 229.0 / 255.0, green: 106.0 / 255.0, blue: 90.0 / 255.0),
         barLabel: Color(red: 242.0 / 255.0, green: 244.0 / 255.0, blue: 243.0 / 255.0),
-        segmentOn: Color(red: 246.0 / 255.0, green: 168.0 / 255.0, blue: 137.0 / 255.0),
+        segmentOn: Color(red: 250.0 / 255.0, green: 154.0 / 255.0, blue: 112.0 / 255.0),
         segmentOff: Color(red: 196.0 / 255.0, green: 122.0 / 255.0, blue: 98.0 / 255.0).opacity(0.14),
         segmentGlow: false,
-        clockLED: Color(red: 246.0 / 255.0, green: 168.0 / 255.0, blue: 137.0 / 255.0),
+        clockLED: Color(red: 250.0 / 255.0, green: 154.0 / 255.0, blue: 112.0 / 255.0),
         clockLEDOffColor: Color(red: 196.0 / 255.0, green: 122.0 / 255.0, blue: 98.0 / 255.0).opacity(0.14),
         glassTint: NSColor(calibratedWhite: 0, alpha: 0.55),
         arcade: .graffiti,
@@ -219,10 +219,12 @@ struct ThemePalette {
 extension ThemePalette {
     /// Unlit LED segments for the Dark/Light inks: faint enough that digits don't read as 8s.
     static let inkLEDOffOpacity: Double = 0.025
+    /// Dark-ink (Light) palette unlit segments: a touch more visible.
+    static let darkInkLEDOffOpacity: Double = 0.07
 
     /// Dark ink (for light pictures / the Dark theme): very dark orange LEDs, black text.
     static func darkInk(glassTint: NSColor?, clockGlassTint: NSColor) -> ThemePalette {
-        let led = Color(red: 0.40, green: 0.14, blue: 0.0)
+        let led = Color(red: 0.72, green: 0.20, blue: 0.0)
         return ThemePalette(
             titleFont: .caption.weight(.semibold),
             captionFont: .caption,
@@ -239,10 +241,10 @@ extension ThemePalette {
             warning: ArcadeChrome.darkInk.warning,
             barLabel: Color(white: 0.04),
             segmentOn: led,
-            segmentOff: led.opacity(inkLEDOffOpacity),
+            segmentOff: led.opacity(darkInkLEDOffOpacity),
             segmentGlow: false,
             clockLED: led,
-            clockLEDOffColor: led.opacity(inkLEDOffOpacity),
+            clockLEDOffColor: led.opacity(darkInkLEDOffOpacity),
             glassTint: glassTint,
             arcade: .darkInk,
             clockGlassTint: clockGlassTint,
@@ -280,12 +282,12 @@ extension ThemePalette {
         )
     }
 
-    static let customDark = darkInk(glassTint: NSColor(calibratedWhite: 1, alpha: 0.35), clockGlassTint: NSColor(calibratedWhite: 1, alpha: 0.35))
-    static let customLight = lightInk(glassTint: NSColor(calibratedWhite: 0, alpha: 0.55), clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.55))
-    /// Standalone Dark theme: dark ink on a plain light-gray panel.
-    static let darkTheme = darkInk(glassTint: NSColor(calibratedWhite: 0.93, alpha: 0.9), clockGlassTint: NSColor(calibratedWhite: 0.93, alpha: 0.85))
-    /// Standalone Light theme: light ink on a plain near-black panel.
-    static let lightTheme = lightInk(glassTint: NSColor(calibratedWhite: 0.06, alpha: 0.88), clockGlassTint: NSColor(calibratedWhite: 0.06, alpha: 0.8))
+    static let customDarkInk = darkInk(glassTint: NSColor(calibratedWhite: 1, alpha: 0.35), clockGlassTint: NSColor(calibratedWhite: 1, alpha: 0.35))
+    static let customLightInk = lightInk(glassTint: NSColor(calibratedWhite: 0, alpha: 0.55), clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.55))
+    /// Standalone Light theme: dark ink on a plain light-gray panel.
+    static let lightPanelTheme = darkInk(glassTint: NSColor(calibratedWhite: 0.93, alpha: 0.9), clockGlassTint: NSColor(calibratedWhite: 0.93, alpha: 0.85))
+    /// Standalone Dark theme: light ink on a plain near-black panel.
+    static let darkPanelTheme = lightInk(glassTint: NSColor(calibratedWhite: 0.06, alpha: 0.88), clockGlassTint: NSColor(calibratedWhite: 0.06, alpha: 0.8))
 }
 
 enum ClockLEDChrome {
@@ -309,7 +311,7 @@ final class ThemeStore {
 
     /// True when the active palette uses dark ink (needs a light color scheme and a light scrim).
     var usesDarkInk: Bool {
-        id == .dark || (id == .custom && customColorTheme == .dark)
+        id == .light || (id == .custom && customColorTheme == .light)
     }
 
     var customBackgroundPath: String?
@@ -320,9 +322,9 @@ final class ThemeStore {
         case .system: .system
         case .matrix: .matrix
         case .graffiti: .graffiti
-        case .dark: .darkTheme
-        case .light: .lightTheme
-        case .custom: customColorTheme == .dark ? .customDark : .customLight
+        case .dark: .darkPanelTheme
+        case .light: .lightPanelTheme
+        case .custom: customColorTheme == .dark ? .customLightInk : .customDarkInk
         }
     }
 
@@ -347,9 +349,10 @@ final class ThemeStore {
 
     init() {
         IdentityMigration.runIfNeeded()
+        Self.migrateBackgroundNaming()
         let raw = UserDefaults.standard.string(forKey: "app.theme") ?? ""
         id = ThemeID(rawValue: raw) ?? .system
-        customColorTheme = CustomColorTheme(rawValue: UserDefaults.standard.string(forKey: Keys.customInk) ?? "") ?? .light
+        customColorTheme = CustomColorTheme(rawValue: UserDefaults.standard.string(forKey: Keys.customInk) ?? "") ?? .dark
         customBackgroundPath = UserDefaults.standard.string(forKey: Keys.customPath)
         customBackgroundName = UserDefaults.standard.string(forKey: Keys.customName)
     }
@@ -440,6 +443,20 @@ final class ThemeStore {
         }
     }
 
+    /// One-time swap: Dark/Light used to name the ink, now they name the background.
+    /// Old "dark" (dark ink) becomes "light" and vice versa, so every saved look is unchanged.
+    static func migrateBackgroundNaming(_ defaults: UserDefaults = .standard) {
+        guard !defaults.bool(forKey: Keys.namingMigrated) else { return }
+        for key in ["app.theme", Keys.customInk] {
+            switch defaults.string(forKey: key) {
+            case "dark": defaults.set("light", forKey: key)
+            case "light": defaults.set("dark", forKey: key)
+            default: break
+            }
+        }
+        defaults.set(true, forKey: Keys.namingMigrated)
+    }
+
     private static func supportDirectory() -> URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("MetricsWidget", isDirectory: true)
@@ -461,5 +478,6 @@ final class ThemeStore {
         static let customPath = "theme.customBackgroundPath"
         static let customName = "theme.customBackgroundName"
         static let customInk = "theme.customColorTheme"
+        static let namingMigrated = "theme.backgroundNamingMigrated"
     }
 }

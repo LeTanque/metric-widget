@@ -36,6 +36,8 @@ struct UsagePanelView: View {
                     ProviderStatusSection(status: status, inset: ArcadePanelMetrics.inset(embedded: embedded))
                 }
             }
+            // Breathing room under the last section when the tile is resized taller.
+            .padding(.bottom, 9)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }

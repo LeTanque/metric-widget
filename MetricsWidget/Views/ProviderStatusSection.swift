@@ -15,7 +15,7 @@ struct ProviderStatusSection: View {
                     .foregroundStyle(chrome.headerTitle)
             }
             ForEach(status.lines) { line in
-                (Text("\(line.dot)  ").font(ArcadeFont.font(size: 6))
+                (Text("\(line.dot)").font(.system(size: 8.5)) + Text("  ").font(ArcadeFont.font(size: 6))
                     + Text(line.name.uppercased()).font(ArcadeFont.font(size: 6)).foregroundStyle(chrome.label)
                     + Text(" — ").font(ArcadeFont.font(size: 6)).foregroundStyle(chrome.label)
                     // Same style as the "CALENDAR MONTH · ORG COSTS" subtitle in UsagePanelView.
