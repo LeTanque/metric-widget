@@ -257,6 +257,8 @@ final class PanelController {
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
+        // Menu-bar (LSUIElement) apps aren't always granted activation; still put the window on top.
+        settingsWindow?.orderFrontRegardless()
     }
 
     private func applyOpenAtLogin() {

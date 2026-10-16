@@ -27,6 +27,7 @@ struct MetricsWidgetApp: App {
             Button("Settings…") {
                 panels.openSettings()
             }
+            .keyboardShortcut(",")
             Toggle("Open at Login", isOn: $panels.openAtLogin)
             Divider()
             Button("Quit Metrics") {

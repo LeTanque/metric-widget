@@ -154,6 +154,16 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         let item = NSMenuItem(title: "Reset Size", action: #selector(resetPanelSize(_:)), keyEquivalent: "")
         item.target = self
         menu.addItem(item)
+        menu.addItem(.separator())
+        // Same window as the menu-bar Settings… command; nil target routes to the app delegate.
+        let settings = NSMenuItem(
+            title: "Settings…",
+            action: #selector(MetricsAppDelegate.openSettingsFromMenu(_:)),
+            keyEquivalent: ","
+        )
+        settings.keyEquivalentModifierMask = [.command]
+        settings.target = nil
+        menu.addItem(settings)
         return menu
     }
 

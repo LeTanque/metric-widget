@@ -32,6 +32,11 @@ final class MetricsAppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = mainMenu
     }
 
+    /// Panel right-click "Settings…": opens and fronts the shared Settings window.
+    @objc func openSettingsFromMenu(_ sender: Any?) {
+        panelController?.openSettings()
+    }
+
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         NSApp.activate(ignoringOtherApps: true)
         panelController?.openSettings()
