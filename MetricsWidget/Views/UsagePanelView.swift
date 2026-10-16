@@ -66,8 +66,7 @@ private struct ProviderUsageBlock: View {
                 }
             }
             Text(provider.subtitle.uppercased())
-                .font(ArcadeFont.font(size: 5))
-                .foregroundStyle(chrome.label)
+                .arcadeCaption(chrome)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let error = provider.error {
@@ -84,7 +83,8 @@ private struct ProviderUsageBlock: View {
                         remaining: true,
                         compact: true,
                         wrapWhenTight: true,
-                        usageThreshold: true
+                        usageThreshold: true,
+                        captionTitle: true
                     )
                 } else {
                     Text(provider.detail)
@@ -99,8 +99,7 @@ private struct ProviderUsageBlock: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 // Section name (subtitle style) keeps Cursor Models / Other Models distinct.
                                 Text(line.label.uppercased())
-                                    .font(ArcadeFont.font(size: 5))
-                                    .foregroundStyle(chrome.label)
+                                    .arcadeCaption(chrome)
                                     .fixedSize(horizontal: false, vertical: true)
                                 MeterBar(
                                     title: "Included spend remaining",
@@ -109,7 +108,8 @@ private struct ProviderUsageBlock: View {
                                     remaining: true,
                                     compact: true,
                                     wrapWhenTight: true,
-                                    usageThreshold: true
+                                    usageThreshold: true,
+                        captionTitle: true
                                 )
                             }
                         }

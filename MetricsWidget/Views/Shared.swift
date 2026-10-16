@@ -277,6 +277,19 @@ struct PanelChrome<Content: View>: View {
     }
 }
 
+/// Shared small caption style: the "CALENDAR MONTH" / "CURSOR MODELS" / "INCLUDED SPEND REMAINING" line.
+enum ArcadeCaption {
+    static let size: CGFloat = 5
+    static var font: Font { ArcadeFont.font(size: size) }
+}
+
+extension View {
+    /// Small uppercase caption in the theme's label color.
+    func arcadeCaption(_ chrome: ArcadeChrome) -> some View {
+        font(ArcadeCaption.font).foregroundStyle(chrome.label)
+    }
+}
+
 struct MeterBar: View {
     let title: String
     let percent: Double
@@ -287,6 +300,9 @@ struct MeterBar: View {
     var wrapWhenTight: Bool = false
     /// Usage tile: alert only when 15% or less remains.
     var usageThreshold: Bool = false
+    /// Title in the shared caption style; inline value matches it when on the same line,
+    /// and keeps the larger size when it wraps to its own line.
+    var captionTitle: Bool = false
     @Environment(ThemeStore.self) private var themes
 
     var body: some View {
@@ -299,7 +315,31 @@ struct MeterBar: View {
         let valueSize: CGFloat = compact ? 7 : 8
 
         VStack(alignment: .leading, spacing: 3) {
-            if wrapWhenTight {
+            if wrapWhenTight && captionTitle {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(title.uppercased()).arcadeCaption(chrome)
+                            .fixedSize(horizontal: true, vertical: true)
+                        Spacer(minLength: 6)
+                        if !detail.isEmpty {
+                            Text(detail)
+                                .font(ArcadeCaption.font)
+                                .foregroundStyle(detailColor ?? chrome.value)
+                                .fixedSize(horizontal: true, vertical: true)
+                        }
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title.uppercased()).arcadeCaption(chrome)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if !detail.isEmpty {
+                            Text(detail)
+                                .font(ArcadeFont.font(size: titleSize))
+                                .foregroundStyle(detailColor ?? chrome.value)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            } else if wrapWhenTight {
                 ArcadeFittingPair(showsValue: !detail.isEmpty) {
                     Text(title.uppercased())
                         .font(ArcadeFont.font(size: titleSize))
