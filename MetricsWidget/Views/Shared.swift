@@ -150,13 +150,14 @@ struct SectionHeaderBand<Content: View>: View {
     var inset: CGFloat
     var flushTop: Bool = false
     @ViewBuilder var content: Content
+    @Environment(ThemeStore.self) private var themes
 
     var body: some View {
         content
             .padding(.vertical, 4)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                ArcadeTileChrome.plotFill
+                themes.palette.arcade.headerFill
                     .padding(.horizontal, -inset)
                     .padding(.top, flushTop ? -inset : 0)
             }

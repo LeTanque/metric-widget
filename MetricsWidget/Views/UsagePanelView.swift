@@ -58,11 +58,11 @@ private struct ProviderUsageBlock: View {
                 ArcadeFittingPair(showsValue: !provider.resetLabel.isEmpty) {
                     Text(provider.title.uppercased())
                         .font(ArcadeFont.font(size: 7))
-                        .foregroundStyle(chrome.value)
+                        .foregroundStyle(chrome.headerTitle)
                 } value: {
                     Text(provider.resetLabel.uppercased())
                         .font(ArcadeFont.font(size: 5))
-                        .foregroundStyle(chrome.label)
+                        .foregroundStyle(chrome.headerLabel)
                 }
             }
             Text(provider.subtitle.uppercased())

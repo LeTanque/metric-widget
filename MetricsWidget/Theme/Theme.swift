@@ -6,6 +6,8 @@ enum ThemeID: String, CaseIterable, Identifiable {
     case system
     case matrix
     case graffiti
+    case dark
+    case light
     case custom
 
     var id: String { rawValue }
@@ -15,6 +17,8 @@ enum ThemeID: String, CaseIterable, Identifiable {
         case .system: "System"
         case .matrix: "Matrix"
         case .graffiti: "Graffiti"
+        case .dark: "Dark"
+        case .light: "Light"
         case .custom: "Custom"
         }
     }
@@ -22,6 +26,16 @@ enum ThemeID: String, CaseIterable, Identifiable {
     var usesMuralBackground: Bool {
         self == .graffiti || self == .custom
     }
+}
+
+/// Ink for the Custom theme. Named for the ink, not the picture:
+/// `.dark` = dark ink for light pictures, `.light` = light ink for dark pictures.
+enum CustomColorTheme: String, CaseIterable, Identifiable {
+    case dark
+    case light
+
+    var id: String { rawValue }
+    var menuTitle: String { self == .dark ? "Dark" : "Light" }
 }
 
 struct ArcadeChrome: Equatable, Sendable {
@@ -34,6 +48,10 @@ struct ArcadeChrome: Equatable, Sendable {
     var plotFill: Color
     var grid: Color
     var baseline: Color
+    /// Tile title band (GROK BOT, STATUS, …): fill, title text, secondary text.
+    var headerFill: Color = ArcadeTileChrome.plotFill
+    var headerTitle: Color = ArcadeTileChrome.value
+    var headerLabel: Color = ArcadeTileChrome.label
 
     static var standard: ArcadeChrome {
         ArcadeChrome(
@@ -58,7 +76,41 @@ struct ArcadeChrome: Equatable, Sendable {
         value: Color(red: 242.0 / 255.0, green: 244.0 / 255.0, blue: 243.0 / 255.0),
         plotFill: Color.black,
         grid: Color(red: 46.0 / 255.0, green: 143.0 / 255.0, blue: 168.0 / 255.0),
-        baseline: Color(red: 95.0 / 255.0, green: 211.0 / 255.0, blue: 176.0 / 255.0).opacity(0.5)
+        baseline: Color(red: 95.0 / 255.0, green: 211.0 / 255.0, blue: 176.0 / 255.0).opacity(0.5),
+        headerTitle: Color(red: 242.0 / 255.0, green: 244.0 / 255.0, blue: 243.0 / 255.0),
+        headerLabel: Color(red: 184.0 / 255.0, green: 208.0 / 255.0, blue: 200.0 / 255.0)
+    )
+
+    /// Dark ink for light backgrounds; title bands stay black with white text.
+    static let darkInk = ArcadeChrome(
+        upload: Color(red: 0.55, green: 0.22, blue: 0.0),
+        download: Color(red: 0.0, green: 0.36, blue: 0.40),
+        accent: Color(red: 0.0, green: 0.36, blue: 0.40),
+        warning: Color(red: 0.72, green: 0.04, blue: 0.12),
+        label: Color(white: 0.24),
+        value: Color(white: 0.04),
+        plotFill: Color.white.opacity(0.55),
+        grid: Color.black.opacity(0.14),
+        baseline: Color.black.opacity(0.32),
+        headerFill: Color(white: 0.04),
+        headerTitle: Color.white,
+        headerLabel: Color(white: 0.72)
+    )
+
+    /// Light ink for dark backgrounds; title bands inverted to white with black text.
+    static let lightInk = ArcadeChrome(
+        upload: Color.white,
+        download: Color(red: 0.55, green: 0.90, blue: 1.0),
+        accent: Color(red: 0.55, green: 0.90, blue: 1.0),
+        warning: Color(red: 1.0, green: 0.36, blue: 0.36),
+        label: Color(white: 0.78),
+        value: Color.white,
+        plotFill: Color.black.opacity(0.55),
+        grid: Color.white.opacity(0.16),
+        baseline: Color.white.opacity(0.4),
+        headerFill: Color.white,
+        headerTitle: Color.black,
+        headerLabel: Color(white: 0.25)
     )
 }
 
@@ -153,15 +205,87 @@ struct ThemePalette {
         warning: Color(red: 229.0 / 255.0, green: 106.0 / 255.0, blue: 90.0 / 255.0),
         barLabel: Color(red: 242.0 / 255.0, green: 244.0 / 255.0, blue: 243.0 / 255.0),
         segmentOn: Color(red: 246.0 / 255.0, green: 168.0 / 255.0, blue: 137.0 / 255.0),
-        segmentOff: Color(red: 196.0 / 255.0, green: 122.0 / 255.0, blue: 98.0 / 255.0),
+        segmentOff: Color(red: 196.0 / 255.0, green: 122.0 / 255.0, blue: 98.0 / 255.0).opacity(0.14),
         segmentGlow: false,
         clockLED: Color(red: 246.0 / 255.0, green: 168.0 / 255.0, blue: 137.0 / 255.0),
-        clockLEDOffColor: Color(red: 196.0 / 255.0, green: 122.0 / 255.0, blue: 98.0 / 255.0),
+        clockLEDOffColor: Color(red: 196.0 / 255.0, green: 122.0 / 255.0, blue: 98.0 / 255.0).opacity(0.14),
         glassTint: NSColor(calibratedWhite: 0, alpha: 0.55),
         arcade: .graffiti,
         clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.55),
         glassMaterial: .underWindowBackground
     )
+}
+
+extension ThemePalette {
+    /// Unlit LED segments for the Dark/Light inks: faint enough that digits don't read as 8s.
+    static let inkLEDOffOpacity: Double = 0.025
+
+    /// Dark ink (for light pictures / the Dark theme): very dark orange LEDs, black text.
+    static func darkInk(glassTint: NSColor?, clockGlassTint: NSColor) -> ThemePalette {
+        let led = Color(red: 0.40, green: 0.14, blue: 0.0)
+        return ThemePalette(
+            titleFont: .caption.weight(.semibold),
+            captionFont: .caption,
+            caption2Font: .caption2,
+            bodyFont: .callout.monospacedDigit().weight(.medium),
+            valueFont: .caption.monospacedDigit(),
+            primary: Color(white: 0.06),
+            secondary: Color(white: 0.06).opacity(0.78),
+            tertiary: Color(white: 0.06).opacity(0.5),
+            accent: ArcadeChrome.darkInk.accent,
+            track: Color.black.opacity(0.18),
+            down: ArcadeChrome.darkInk.download,
+            up: ArcadeChrome.darkInk.upload,
+            warning: ArcadeChrome.darkInk.warning,
+            barLabel: Color(white: 0.04),
+            segmentOn: led,
+            segmentOff: led.opacity(inkLEDOffOpacity),
+            segmentGlow: false,
+            clockLED: led,
+            clockLEDOffColor: led.opacity(inkLEDOffOpacity),
+            glassTint: glassTint,
+            arcade: .darkInk,
+            clockGlassTint: clockGlassTint,
+            glassMaterial: .underWindowBackground
+        )
+    }
+
+    /// Light ink (for dark pictures / the Light theme): white glowing LEDs, white text.
+    static func lightInk(glassTint: NSColor?, clockGlassTint: NSColor) -> ThemePalette {
+        let led = Color.white
+        return ThemePalette(
+            titleFont: .caption.weight(.semibold),
+            captionFont: .caption,
+            caption2Font: .caption2,
+            bodyFont: .callout.monospacedDigit().weight(.medium),
+            valueFont: .caption.monospacedDigit(),
+            primary: Color.white,
+            secondary: Color.white.opacity(0.8),
+            tertiary: Color.white.opacity(0.5),
+            accent: ArcadeChrome.lightInk.accent,
+            track: Color.black.opacity(0.45),
+            down: ArcadeChrome.lightInk.download,
+            up: ArcadeChrome.lightInk.upload,
+            warning: ArcadeChrome.lightInk.warning,
+            barLabel: Color.white,
+            segmentOn: led,
+            segmentOff: led.opacity(inkLEDOffOpacity),
+            segmentGlow: true,
+            clockLED: led,
+            clockLEDOffColor: led.opacity(inkLEDOffOpacity),
+            glassTint: glassTint,
+            arcade: .lightInk,
+            clockGlassTint: clockGlassTint,
+            glassMaterial: .underWindowBackground
+        )
+    }
+
+    static let customDark = darkInk(glassTint: NSColor(calibratedWhite: 1, alpha: 0.35), clockGlassTint: NSColor(calibratedWhite: 1, alpha: 0.35))
+    static let customLight = lightInk(glassTint: NSColor(calibratedWhite: 0, alpha: 0.55), clockGlassTint: NSColor(calibratedWhite: 0, alpha: 0.55))
+    /// Standalone Dark theme: dark ink on a plain light-gray panel.
+    static let darkTheme = darkInk(glassTint: NSColor(calibratedWhite: 0.93, alpha: 0.9), clockGlassTint: NSColor(calibratedWhite: 0.93, alpha: 0.85))
+    /// Standalone Light theme: light ink on a plain near-black panel.
+    static let lightTheme = lightInk(glassTint: NSColor(calibratedWhite: 0.06, alpha: 0.88), clockGlassTint: NSColor(calibratedWhite: 0.06, alpha: 0.8))
 }
 
 enum ClockLEDChrome {
@@ -179,6 +303,15 @@ final class ThemeStore {
         didSet { UserDefaults.standard.set(id.rawValue, forKey: "app.theme") }
     }
 
+    var customColorTheme: CustomColorTheme {
+        didSet { UserDefaults.standard.set(customColorTheme.rawValue, forKey: Keys.customInk) }
+    }
+
+    /// True when the active palette uses dark ink (needs a light color scheme and a light scrim).
+    var usesDarkInk: Bool {
+        id == .dark || (id == .custom && customColorTheme == .dark)
+    }
+
     var customBackgroundPath: String?
     var customBackgroundName: String?
 
@@ -186,7 +319,10 @@ final class ThemeStore {
         switch id {
         case .system: .system
         case .matrix: .matrix
-        case .graffiti, .custom: .graffiti
+        case .graffiti: .graffiti
+        case .dark: .darkTheme
+        case .light: .lightTheme
+        case .custom: customColorTheme == .dark ? .customDark : .customLight
         }
     }
 
@@ -213,6 +349,7 @@ final class ThemeStore {
         IdentityMigration.runIfNeeded()
         let raw = UserDefaults.standard.string(forKey: "app.theme") ?? ""
         id = ThemeID(rawValue: raw) ?? .system
+        customColorTheme = CustomColorTheme(rawValue: UserDefaults.standard.string(forKey: Keys.customInk) ?? "") ?? .light
         customBackgroundPath = UserDefaults.standard.string(forKey: Keys.customPath)
         customBackgroundName = UserDefaults.standard.string(forKey: Keys.customName)
     }
@@ -323,5 +460,6 @@ final class ThemeStore {
     private enum Keys {
         static let customPath = "theme.customBackgroundPath"
         static let customName = "theme.customBackgroundName"
+        static let customInk = "theme.customColorTheme"
     }
 }

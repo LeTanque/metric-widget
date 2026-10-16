@@ -12,7 +12,7 @@ struct ProviderStatusSection: View {
             SectionHeaderBand(inset: inset, flushTop: false) {
                 Text("STATUS")
                     .font(ArcadeFont.font(size: 7))
-                    .foregroundStyle(chrome.value)
+                    .foregroundStyle(chrome.headerTitle)
             }
             ForEach(status.lines) { line in
                 (Text("\(line.dot)  ").font(ArcadeFont.font(size: 6))

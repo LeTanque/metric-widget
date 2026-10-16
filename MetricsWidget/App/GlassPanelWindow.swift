@@ -15,11 +15,11 @@ private struct ThemedRoot<Content: View>: View {
 
     var body: some View {
         Group {
-            if themes.id == .matrix || themes.id == .graffiti || themes.id == .custom {
+            if themes.id != .system {
                 content
                     .environment(themes)
                     .environment(sizeBridge)
-                    .environment(\.colorScheme, .dark)
+                    .environment(\.colorScheme, themes.usesDarkInk ? .light : .dark)
             } else {
                 content
                     .environment(themes)
@@ -226,6 +226,8 @@ final class GlassPanelWindow: NSPanel, NSWindowDelegate {
         }
         if themeStore.id.usesMuralBackground {
             muralView?.image = themeStore.muralImage()
+            muralView?.scrimColor = themeStore.usesDarkInk ? .white : .black
+            muralView?.scrimAlpha = themeStore.usesDarkInk ? 0.35 : 0.55
             muralView?.isHidden = false
             muralView?.needsDisplay = true
             tintOverlay?.layer?.backgroundColor = NSColor.clear.cgColor

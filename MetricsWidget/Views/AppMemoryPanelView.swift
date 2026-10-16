@@ -16,7 +16,8 @@ struct AppMemoryPanelView: View {
                     ArcadeLabeledRow(
                         label: "Top RSS",
                         value: ByteFormat.bytes(snap.processMemoryTotal),
-                        labelColor: chrome.value
+                        valueColor: chrome.headerTitle,
+                        labelColor: chrome.headerTitle
                     )
                 }
 

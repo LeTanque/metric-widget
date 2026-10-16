@@ -6,6 +6,11 @@ final class MuralBackdropView: NSView {
         didSet { needsDisplay = true }
     }
 
+    /// Light scrim for dark-ink palettes on light pictures; black otherwise.
+    var scrimColor: NSColor = .black {
+        didSet { needsDisplay = true }
+    }
+
     var scrimAlpha: CGFloat = 0.55 {
         didSet { needsDisplay = true }
     }
@@ -41,7 +46,7 @@ final class MuralBackdropView: NSView {
                 .interpolation: NSImageInterpolation.high
             ]
         )
-        NSColor.black.withAlphaComponent(scrimAlpha).setFill()
+        scrimColor.withAlphaComponent(scrimAlpha).setFill()
         bounds.fill(using: .sourceOver)
     }
 

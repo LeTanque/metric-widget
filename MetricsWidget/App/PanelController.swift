@@ -21,6 +21,14 @@ final class PanelController {
         }
     }
 
+    var customColorTheme: CustomColorTheme {
+        get { themeStore.customColorTheme }
+        set {
+            themeStore.customColorTheme = newValue
+            applyThemeToWindows()
+        }
+    }
+
     var showNetwork: Bool {
         didSet {
             UserDefaults.standard.set(showNetwork, forKey: Keys.network)

@@ -54,14 +54,32 @@ struct SettingsView: View {
                         Text(theme.menuTitle).tag(theme)
                     }
                 }
-                Button("Choose Picture…") {
-                    panels.chooseCustomBackground()
-                }
-                if let name = themes.customBackgroundFileName {
-                    Text(name)
-                    Button("Remove") {
-                        panels.removeCustomBackground()
+                // Color Theme and picture rows only apply to Custom, so they hide otherwise.
+                if panels.themeID == .custom {
+                    Picker("Color Theme", selection: $panels.customColorTheme) {
+                        ForEach(CustomColorTheme.allCases) { ink in
+                            Text(ink.menuTitle).tag(ink)
+                        }
                     }
+                    VStack(alignment: .trailing, spacing: 6) {
+                        Button("Choose Picture…") {
+                            panels.chooseCustomBackground()
+                        }
+                        if let name = themes.customBackgroundFileName {
+                            HStack(spacing: 6) {
+                                Spacer(minLength: 0)
+                                Text(name)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                                    .foregroundStyle(.secondary)
+                                    .help(name)
+                                RemovePictureButton {
+                                    panels.removeCustomBackground()
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
         }
@@ -193,4 +211,22 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     case usage = "Usage"
 
     var id: String { rawValue }
+}
+
+/// Small red circle with a black ⓧ; removes the custom picture.
+private struct RemovePictureButton: View {
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark.circle")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.black)
+                .frame(width: 16, height: 16)
+                .background(Circle().fill(Color.red))
+        }
+        .buttonStyle(.plain)
+        .help("Remove picture")
+        .accessibilityLabel("Remove picture")
+    }
 }
