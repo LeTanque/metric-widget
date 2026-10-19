@@ -70,8 +70,7 @@ enum CursorDashboardQuotaClient {
     /// Wire values are percentages on a 0–100 scale (e.g. 21.4 → 21% used), not fractions.
     private static func percentUsed(_ value: Any?) -> Double? {
         guard let raw = number(value) else { return nil }
-        let used = raw > 0 && raw <= 1.5 ? raw * 100 : raw
-        return min(max(used, 0), 100)
+        return min(max(raw, 0), 100)
     }
 
     private static func number(_ value: Any?) -> Double? {
