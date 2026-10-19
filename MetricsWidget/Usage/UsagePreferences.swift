@@ -12,6 +12,7 @@ final class UsagePreferences {
     var cursorEnabled: Bool
     var grokBotEnabled: Bool
     var openaiEnabled: Bool
+    var openaiPlanLimitsEnabled: Bool
     var anthropicEnabled: Bool
     var openaiKey: String
     var anthropicKey: String
@@ -23,6 +24,7 @@ final class UsagePreferences {
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
         grokBotEnabled = defaults.object(forKey: Keys.grokBot) as? Bool ?? true
         openaiEnabled = defaults.object(forKey: Keys.openai) as? Bool ?? true
+        openaiPlanLimitsEnabled = defaults.object(forKey: Keys.openaiPlanLimits) as? Bool ?? true
         anthropicEnabled = defaults.object(forKey: Keys.anthropic) as? Bool ?? false
         openaiKey = ""
         anthropicKey = ""
@@ -35,6 +37,7 @@ final class UsagePreferences {
         cursorEnabled = defaults.object(forKey: Keys.cursor) as? Bool ?? true
         grokBotEnabled = defaults.object(forKey: Keys.grokBot) as? Bool ?? true
         openaiEnabled = defaults.object(forKey: Keys.openai) as? Bool ?? true
+        openaiPlanLimitsEnabled = defaults.object(forKey: Keys.openaiPlanLimits) as? Bool ?? true
         anthropicEnabled = defaults.object(forKey: Keys.anthropic) as? Bool ?? false
         openaiKey = KeychainStore.password(account: KeychainAccount.openAI) ?? ""
         anthropicKey = KeychainStore.password(account: KeychainAccount.anthropic) ?? ""
@@ -49,6 +52,7 @@ final class UsagePreferences {
         UserDefaults.standard.set(cursorEnabled, forKey: Keys.cursor)
         UserDefaults.standard.set(grokBotEnabled, forKey: Keys.grokBot)
         UserDefaults.standard.set(openaiEnabled, forKey: Keys.openai)
+        UserDefaults.standard.set(openaiPlanLimitsEnabled, forKey: Keys.openaiPlanLimits)
         UserDefaults.standard.set(anthropicEnabled, forKey: Keys.anthropic)
         let budget = openaiMonthlyBudgetValue
         if budget > 0 {
@@ -95,6 +99,7 @@ final class UsagePreferences {
         static let cursor = "usage.cursor.enabled"
         static let grokBot = "usage.grokbot.enabled"
         static let openai = "usage.openai.enabled"
+        static let openaiPlanLimits = "usage.openai.planLimits.enabled"
         static let anthropic = "usage.anthropic.enabled"
         static let openaiBudget = "usage.openai.monthlyBudget"
     }

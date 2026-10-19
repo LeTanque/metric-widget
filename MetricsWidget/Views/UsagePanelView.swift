@@ -127,6 +127,30 @@ private struct ProviderUsageBlock: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            if !provider.limitBars.isEmpty {
+                // ChatGPT-plan limits stay visible even if the Admin-key costs call fails.
+                VStack(alignment: .leading, spacing: 6) {
+                    if let note = provider.limitsNote {
+                        Text(note.uppercased())
+                            .arcadeCaption(chrome)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    ForEach(provider.limitBars, id: \.self) { bar in
+                        MeterBar(
+                            title: bar.title,
+                            percent: bar.percentRemaining,
+                            detail: bar.resetNote.uppercased(),
+                            remaining: true,
+                            detailColor: chrome.label,
+                            compact: true,
+                            wrapWhenTight: true,
+                            usageThreshold: true,
+                            captionTitle: true
+                        )
+                    }
+                }
+                .padding(.top, 4)
+            }
             if let updated {
                 // Same style as the OpenAI "UPDATED" line at the bottom of the tile.
                 Text("UPDATED \(updated.formatted(date: .omitted, time: .shortened))")

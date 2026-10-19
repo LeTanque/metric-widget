@@ -128,6 +128,12 @@ struct SettingsView: View {
                 Toggle("Cursor (signed-in app session)", isOn: $preferences.cursorEnabled)
                 Toggle("Grok Bot (weekly included quota)", isOn: $preferences.grokBotEnabled)
                 Toggle("OpenAI", isOn: $preferences.openaiEnabled)
+                if preferences.openaiEnabled {
+                    Toggle("ChatGPT plan limits (5-hour, weekly)", isOn: $preferences.openaiPlanLimitsEnabled)
+                    Text("Unofficial: uses your Codex sign-in (~/.codex) to read the limits Codex /status shows; falls back to the latest Codex session log. No Admin key needed.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Toggle("Anthropic", isOn: $preferences.anthropicEnabled)
             }
 

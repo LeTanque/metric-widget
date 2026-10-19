@@ -53,7 +53,8 @@ final class UsageStore {
             anthropicEnabled: prefs.anthropicEnabled,
             openaiKey: prefs.openaiKey,
             anthropicKey: prefs.anthropicKey,
-            openaiMonthlyBudget: prefs.openaiMonthlyBudgetValue
+            openaiMonthlyBudget: prefs.openaiMonthlyBudgetValue,
+            openaiPlanLimitsEnabled: prefs.openaiPlanLimitsEnabled
         )
         DispatchQueue.global(qos: .utility).async {
             let next = UsageSampler.sample(preferences: snapshot)

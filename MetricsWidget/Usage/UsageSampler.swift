@@ -11,9 +11,28 @@ enum UsageSampler {
         }
         if preferences.openaiEnabled {
             let openAIKey = preferences.openaiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !openAIKey.isEmpty {
-                providers.append(OpenAIUsageClient.fetch(apiKey: openAIKey, monthlyBudget: preferences.openaiMonthlyBudget))
+            var openAI: ProviderUsage? = openAIKey.isEmpty
+                ? nil
+                : OpenAIUsageClient.fetch(apiKey: openAIKey, monthlyBudget: preferences.openaiMonthlyBudget)
+            if preferences.openaiPlanLimitsEnabled, let limits = CodexLimitsClient.fetch() {
+                var block = openAI ?? ProviderUsage(
+                    id: "openai",
+                    title: "OpenAI",
+                    subtitle: "ChatGPT plan",
+                    detail: "",
+                    percent: nil,
+                    resetLabel: "",
+                    error: nil
+                )
+                block.limitBars = CodexLimitsClient.bars(limits)
+                var note = ["ChatGPT \(limits.planType ?? "plan") · Codex limits"]
+                if limits.source == .sessionLog {
+                    note.append("from Codex log · updated \(limits.observedAt.formatted(date: .omitted, time: .shortened))")
+                }
+                block.limitsNote = note.joined(separator: " · ")
+                openAI = block
             }
+            if let openAI { providers.append(openAI) }
         }
         if preferences.anthropicEnabled {
             let anthropicKey = preferences.anthropicKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -33,4 +52,5 @@ struct UsagePreferencesSnapshot: Sendable {
     var openaiKey: String
     var anthropicKey: String
     var openaiMonthlyBudget: Double
+    var openaiPlanLimitsEnabled: Bool = true
 }

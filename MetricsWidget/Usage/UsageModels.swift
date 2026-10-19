@@ -8,6 +8,13 @@ struct UsageQuotaLine: Sendable, Hashable {
     var percentRemaining: Double { min(max(100 - percentUsed, 0), 100) }
 }
 
+/// A remaining-percent bar with its own reset note (ChatGPT-plan Codex limits).
+struct UsageLimitBar: Sendable, Hashable {
+    var title: String
+    var percentRemaining: Double
+    var resetNote: String
+}
+
 struct ProviderUsage: Identifiable, Sendable, Hashable {
     var id: String
     var title: String
@@ -20,6 +27,9 @@ struct ProviderUsage: Identifiable, Sendable, Hashable {
     var quotaLines: [UsageQuotaLine] = []
     var footnote: String?
     var meterTitle: String?
+    /// ChatGPT-plan limit bars, shown independently of the costs/error state.
+    var limitBars: [UsageLimitBar] = []
+    var limitsNote: String?
 
     static func placeholder(id: String, title: String, message: String) -> ProviderUsage {
         ProviderUsage(
