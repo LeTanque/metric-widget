@@ -1,17 +1,26 @@
-# Sourced by build.sh and scripts/package_app.sh. Sets MW_SIGN_IDENTITY_RESOLVED.
-# MW_SIGN_IDENTITY overrides: a codesigning identity name/SHA-1, or "-" for ad-hoc.
-# Default: "MetricsWidget Local Signing" when that identity is in the keychain, else ad-hoc.
-# A stable identity keeps the Keychain "Always Allow" grant valid across rebuilds.
-mw_default_identity="MetricsWidget Local Signing"
+# Sourced by build.sh and scripts/package_app.sh.
+# Sets MW_SIGN_IDENTITY_RESOLVED (codesign identity or "-") and MW_DEVELOPMENT_TEAM (may be empty).
+#
+# Resolution order:
+#   1. MW_SIGN_IDENTITY / MW_DEVELOPMENT_TEAM from the environment ("-" forces ad-hoc).
+#   2. ~/.metricswidget-signing/config (machine-local; keeps the team ID out of the shared project).
+#   3. The first valid "Apple Development" identity in the keychain.
+#   4. Ad-hoc.
+# An Apple-issued identity with a Team ID keeps Keychain "Always Allow" grants valid across rebuilds.
+mw_signing_config="${MW_SIGNING_CONFIG:-$HOME/.metricswidget-signing/config}"
+if [ -f "$mw_signing_config" ]; then
+  . "$mw_signing_config"
+fi
 if [ -n "${MW_SIGN_IDENTITY:-}" ]; then
   MW_SIGN_IDENTITY_RESOLVED="$MW_SIGN_IDENTITY"
-elif security find-identity -p codesigning 2>/dev/null | grep -q "\"$mw_default_identity\""; then
-  MW_SIGN_IDENTITY_RESOLVED="$mw_default_identity"
 else
-  MW_SIGN_IDENTITY_RESOLVED="-"
+  MW_SIGN_IDENTITY_RESOLVED="$(security find-identity -v -p codesigning 2>/dev/null \
+    | awk -F'"' '/"Apple Development: / { print $2; exit }')"
+  [ -n "$MW_SIGN_IDENTITY_RESOLVED" ] || MW_SIGN_IDENTITY_RESOLVED="-"
 fi
+MW_DEVELOPMENT_TEAM="${MW_DEVELOPMENT_TEAM:-}"
 if [ "$MW_SIGN_IDENTITY_RESOLVED" = "-" ]; then
-  echo "Signing: ad-hoc (Keychain may re-prompt after each rebuild)"
+  echo "Signing: ad-hoc (Keychain will re-prompt after each rebuild)"
 else
-  echo "Signing: $MW_SIGN_IDENTITY_RESOLVED"
+  echo "Signing: $MW_SIGN_IDENTITY_RESOLVED${MW_DEVELOPMENT_TEAM:+ (team $MW_DEVELOPMENT_TEAM)}"
 fi

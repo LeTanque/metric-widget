@@ -60,23 +60,34 @@ Then launch the signed app bundle at `build/MetricsWidget.app` (or open the Xcod
 
 ## Code signing
 
-Both `./build.sh` and `scripts/package_app.sh` sign with a stable identity when one is available, so macOS Keychain "Always Allow" grants survive rebuilds (ad-hoc signatures change every build and re-prompt).
+The app reads its OpenAI/Anthropic keys from the login Keychain. macOS only remembers an "Always Allow" grant across rebuilds when the app is signed by an Apple-issued identity with a **Team ID**. Ad-hoc and self-signed builds get a new identity per build (the Keychain ties access to the build's code hash), so every rebuild prompts again.
 
-- Default: the `MetricsWidget Local Signing` identity if it's in your login keychain; otherwise ad-hoc (`-`).
-- Override: `MW_SIGN_IDENTITY="Apple Development: …" ./build.sh`, or `MW_SIGN_IDENTITY=- ./build.sh` to force ad-hoc.
-- Create the local identity once (self-signed, code-signing EKU; keep keys out of the repo):
+`./build.sh` and `scripts/package_app.sh` both source `scripts/sign_identity.sh`, which picks the identity in this order:
 
-```sh
-mkdir -p ~/.metricswidget-signing && chmod 700 ~/.metricswidget-signing && cd ~/.metricswidget-signing
-printf '[req]\ndistinguished_name=dn\nx509_extensions=ext\nprompt=no\n[dn]\nCN=MetricsWidget Local Signing\n[ext]\nbasicConstraints=critical,CA:false\nkeyUsage=critical,digitalSignature\nextendedKeyUsage=critical,codeSigning\n' > cert.cnf
-/usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 3650 -config cert.cnf
-PW=$(/usr/bin/openssl rand -hex 16)
-/usr/bin/openssl pkcs12 -export -inkey key.pem -in cert.pem -out mw.p12 -passout pass:$PW
-security import mw.p12 -k ~/Library/Keychains/login.keychain-db -P "$PW" -T /usr/bin/codesign
-rm -f key.pem mw.p12; unset PW
-```
+1. `MW_SIGN_IDENTITY` (identity name or SHA-1; `-` forces ad-hoc) and `MW_DEVELOPMENT_TEAM` from the environment.
+2. `~/.metricswidget-signing/config` — machine-local, not in the repo, e.g.
+   ```sh
+   MW_SIGN_IDENTITY="${MW_SIGN_IDENTITY:-<SHA-1 of your Apple Development identity>}"
+   MW_DEVELOPMENT_TEAM="${MW_DEVELOPMENT_TEAM:-<your Team ID>}"
+   ```
+3. The first valid `Apple Development:` identity in the keychain.
+4. Ad-hoc.
 
-`security find-identity -p codesigning` lists it as `CSSMERR_TP_NOT_TRUSTED`; that's expected for a self-signed cert and doesn't stop local signing. Check a build with `codesign -dvvv build/MetricsWidget.app` (look for `Authority=MetricsWidget Local Signing`) and `codesign --verify --deep --strict build/MetricsWidget.app`.
+When a team is set, `build.sh` passes `DEVELOPMENT_TEAM=…` to `xcodebuild` on the command line, so the shared project keeps `DEVELOPMENT_TEAM = ""` and each machine (or person) can use its own team.
+
+**One-time setup on a new Mac**
+
+1. Xcode → Settings → Apple Accounts → add your Apple ID (a free Personal Team works).
+2. Create the Apple Development certificate, either in Xcode (Apple Accounts → your team → Manage Certificates → + → Apple Development) or from the CLI:
+   ```sh
+   xcodebuild -scheme MetricsWidget -configuration Release -destination 'platform=macOS' \
+     -derivedDataPath /tmp/mw-prov -allowProvisioningUpdates \
+     DEVELOPMENT_TEAM=<TEAM_ID> CODE_SIGN_STYLE=Automatic CODE_SIGN_IDENTITY="Apple Development" build
+   ```
+3. `security find-identity -v -p codesigning` should list `Apple Development: …`. Optionally write `~/.metricswidget-signing/config` (chmod 600) as above.
+4. Build and install; answer the one Keychain prompt with **Always Allow**. Later rebuilds should not prompt.
+
+Check a build with `codesign -dvvv build/MetricsWidget.app` (expect `Authority=Apple Development: …` and `TeamIdentifier=<TEAM_ID>`) and `codesign --verify --deep --strict build/MetricsWidget.app`.
 
 ## Usage tile
 
