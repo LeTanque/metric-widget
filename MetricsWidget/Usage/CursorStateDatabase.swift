@@ -7,26 +7,13 @@ enum CursorStateDatabase {
             .appendingPathComponent("Library/Application Support/Cursor/User/globalStorage/state.vscdb")
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
 
-        let tempDir = FileManager.default.temporaryDirectory
-            .appendingPathComponent("metricswidget-cursor", isDirectory: true)
-        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        let copy = tempDir.appendingPathComponent("state.vscdb")
-        let fm = FileManager.default
-        for suffix in ["", "-wal", "-shm"] {
-            let source = URL(fileURLWithPath: url.path + suffix)
-            let dest = URL(fileURLWithPath: copy.path + suffix)
-            guard fm.fileExists(atPath: source.path) else { continue }
-            try? fm.removeItem(at: dest)
-            try? fm.copyItem(at: source, to: dest)
-        }
-
-        let dbURL = fm.fileExists(atPath: copy.path) ? copy : url
         var db: OpaquePointer?
-        let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX
-        guard sqlite3_open_v2(dbURL.path, &db, flags, nil) == SQLITE_OK, db != nil else {
+        let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_URI
+        guard sqlite3_open_v2(url.absoluteString + "?mode=ro", &db, flags, nil) == SQLITE_OK, db != nil else {
             sqlite3_close(db)
             return nil
         }
+        sqlite3_busy_timeout(db, 2000)
         defer { sqlite3_close(db) }
 
         let escaped = key.replacingOccurrences(of: "'", with: "''")
