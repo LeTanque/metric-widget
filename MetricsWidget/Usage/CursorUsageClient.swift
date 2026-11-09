@@ -2,40 +2,44 @@ import Foundation
 
 enum CursorUsageClient {
     static func fetch() -> ProviderUsage {
-        guard let token = CursorStateDatabase.value(forKey: "cursorAuth/accessToken"), !token.isEmpty else {
-            return .placeholder(
-                id: "cursor",
-                title: "Cursor",
-                message: "Sign in to the Cursor app on this Mac"
-            )
-        }
-
         let email = CursorStateDatabase.value(forKey: "cursorAuth/cachedEmail") ?? ""
         let plan = (CursorStateDatabase.value(forKey: "cursorAuth/stripeMembershipType") ?? "plan").capitalized
 
-        var request = URLRequest(
-            url: URL(string: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage")!
-        )
-        request.httpMethod = "POST"
-        request.timeoutInterval = 12
-        request.httpBody = Data("{}".utf8)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
+        let result = CursorAccessToken.perform(endpoint: "GetCurrentPeriodUsage") { token in
+            var request = URLRequest(
+                url: URL(string: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage")!
+            )
+            request.httpMethod = "POST"
+            request.timeoutInterval = 12
+            request.httpBody = Data("{}".utf8)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
+            return request
+        }
 
         let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try URLSession.shared.synchronousData(for: request)
-        } catch {
+        let http: HTTPURLResponse
+        let token: String
+        switch result {
+        case .response(let body, let response, let usedToken):
+            data = body
+            http = response
+            token = usedToken
+        case .encryptedInDatabase:
+            return errorUsage(CursorAccessToken.encryptedMessage)
+        case .missing:
+            return .placeholder(
+                id: "cursor",
+                title: "Cursor",
+                message: CursorAccessToken.signInMessage
+            )
+        case .transportFailure:
             return errorUsage("Couldn’t reach Cursor")
         }
 
-        guard let http = response as? HTTPURLResponse else {
-            return errorUsage("Couldn’t reach Cursor")
-        }
         if http.statusCode == 401 {
-            return errorUsage("Session expired — sign in to Cursor again")
+            return errorUsage(CursorAccessToken.sessionExpiredMessage)
         }
         guard (200..<300).contains(http.statusCode),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {

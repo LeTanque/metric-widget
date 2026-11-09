@@ -2,37 +2,39 @@ import Foundation
 
 enum GrokBotUsageClient {
     static func fetch() -> ProviderUsage {
-        guard let token = CursorStateDatabase.value(forKey: "cursorAuth/accessToken"), !token.isEmpty else {
+        let result = CursorAccessToken.perform(endpoint: "GetSandUsageStatus") { token in
+            var request = URLRequest(
+                url: URL(string: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetSandUsageStatus")!
+            )
+            request.httpMethod = "POST"
+            request.timeoutInterval = 12
+            request.httpBody = Data("{}".utf8)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
+            return request
+        }
+
+        let data: Data
+        let http: HTTPURLResponse
+        switch result {
+        case .response(let body, let response, _):
+            data = body
+            http = response
+        case .encryptedInDatabase:
+            return errorUsage(CursorAccessToken.encryptedMessage)
+        case .missing:
             return .placeholder(
                 id: "grokbot",
                 title: "Grok Bot",
-                message: "Sign in to the Cursor app on this Mac"
+                message: CursorAccessToken.signInMessage
             )
-        }
-
-        var request = URLRequest(
-            url: URL(string: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetSandUsageStatus")!
-        )
-        request.httpMethod = "POST"
-        request.timeoutInterval = 12
-        request.httpBody = Data("{}".utf8)
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
-
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try URLSession.shared.synchronousData(for: request)
-        } catch {
+        case .transportFailure:
             return errorUsage("Couldn’t reach Grok Bot usage")
         }
 
-        guard let http = response as? HTTPURLResponse else {
-            return errorUsage("Couldn’t reach Grok Bot usage")
-        }
         if http.statusCode == 401 {
-            return errorUsage("Session expired — sign in to Cursor again")
+            return errorUsage(CursorAccessToken.sessionExpiredMessage)
         }
         guard (200..<300).contains(http.statusCode),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
